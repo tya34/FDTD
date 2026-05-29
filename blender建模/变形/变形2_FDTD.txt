@@ -1,0 +1,105 @@
+############################################################
+# 变形2_FDTD.txt
+# 小角度卷曲结构，多段 addrect 拼装
+############################################################
+
+deleteall;
+clear;
+
+um = 1e-6; nm = 1e-9; BU = 100*um;
+film_material = "VO2 20";
+substrate_material = "SiO2 (Glass) - Palik";
+lambda0 = 5*um;
+film_length = 2.0*BU;
+film_width = 0.3*BU;
+film_t = 200*nm;
+Nseg = 160;
+
+flat_tail = film_length*0.20;
+curl_len = film_length-flat_tail;
+theta_total = 3*pi/5;
+theta_missing = 2*pi-theta_total;
+R = curl_len/theta_total;
+half_length = film_length/2;
+x_start = half_length;
+x_end = x_start + R*sin(theta_total);
+z_end = R*(1-cos(theta_total));
+ty_end = cos(theta_total);
+tz_end = sin(theta_total);
+a = -theta_missing;
+
+addstructuregroup;
+set("name","Deform2_rect_segments");
+
+for(i=1:Nseg){
+    s1 = (i-1)/Nseg*film_length;
+    s2 = i/Nseg*film_length;
+    sc = (s1+s2)/2;
+    ds = s2-s1;
+
+    if(sc <= curl_len){
+        theta = sc/curl_len*theta_total;
+        x0 = x_start + R*sin(theta);
+        z0 = R*(1-cos(theta));
+        dxds = cos(theta);
+        dzds = sin(theta);
+    } else {
+        delta = sc-curl_len;
+        x0 = x_end + ty_end*delta;
+        z0 = z_end + tz_end*delta;
+        dxds = ty_end;
+        dzds = tz_end;
+    }
+
+    y = x0*cos(a) + z0*sin(a);
+    z = -x0*sin(a) + z0*cos(a);
+    dyds = dxds*cos(a) + dzds*sin(a);
+    dzds2 = -dxds*sin(a) + dzds*cos(a);
+    alpha = atan2(dzds2,dyds)*180/pi;
+
+    addrect;
+    set("name","deform2_seg_"+num2str(i));
+    set("x",0);
+    set("x span",film_width);
+    set("y",y);
+    set("y span",ds*1.02);
+    set("z",z);
+    set("z span",film_t);
+    set("first axis","x");
+    set("rotation 1",alpha);
+    set("material",film_material);
+    addtogroup("Deform2_rect_segments");
+}
+
+xmin = -60e-6; xmax = 60e-6; ymin = -80e-6; ymax = 150e-6; zmin = -240e-6; zmax = -80e-6;
+xc = 0; yc = (ymin+ymax)/2; zc = (zmin+zmax)/2; xs = xmax-xmin; ys = ymax-ymin; zs = zmax-zmin;
+
+addrect; set("name","Si_substrate");
+set("x",xc); set("x span",xs); set("y",yc); set("y span",ys); set("z",zmin-5e-6); set("z span",10e-6);
+set("material",substrate_material);
+
+addfdtd; set("dimension",2);
+set("x",xc); set("x span",xs); set("y",yc); set("y span",ys); set("z",zc); set("z span",zs);
+set("mesh accuracy",1);
+set("x min bc","PML"); set("x max bc","PML"); set("y min bc","PML"); set("y max bc","PML"); set("z min bc","PML"); set("z max bc","PML");
+
+addplane; set("name","src_x_backward");
+set("plane wave type","BFAST"); set("injection axis","x"); set("direction","backward");
+set("angle theta",30); set("angle phi",30); set("polarization angle",90);
+set("x",xmax-5e-6); set("y",yc); set("y span",ys); set("z",zc); set("z span",zs);
+set("wavelength start",lambda0); set("wavelength stop",lambda0);
+
+addprofile; set("name","xy_mid"); set("monitor type",7);
+set("x",xc); set("x span",0.9*xs); set("y",yc); set("y span",0.9*ys); set("z",zc);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+addprofile; set("name","xy_bottom"); set("monitor type",7);
+set("x",xc); set("x span",0.9*xs); set("y",yc); set("y span",0.9*ys); set("z",zmin+0.1*zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+addprofile; set("name","yz_center"); set("monitor type",5);
+set("x",0); set("y",yc); set("y span",0.9*ys); set("z",zc); set("z span",0.9*zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+addprofile; set("name","xz_center"); set("monitor type",6);
+set("x",xc); set("x span",0.9*xs); set("y",yc); set("z",zc); set("z span",0.9*zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+# run;
