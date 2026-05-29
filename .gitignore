@@ -1,0 +1,26 @@
+# Secrets
+*密码*
+*password*
+*secret*
+*token*
+*key*
+
+# Logs and caches
+*.log
+*_p0.log
+*.db
+*.db-journal
+*cache*
+
+# Blender backups and temporary files
+*.blend1
+*.blend@
+*.tmp
+*.bak
+
+# Large simulation/model/render artifacts: use Git LFS or external storage when needed
+*.fsp
+*.blend
+*.png
+*.jpg
+*.jpeg
