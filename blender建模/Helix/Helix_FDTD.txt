@@ -1,0 +1,167 @@
+############################################################
+# Helix_FDTD.txt
+# 用多级 addrect 瓦片拼装 blender建模/Helix/Helix.blend 的折线卷曲薄膜
+# 仅使用 addrect 基础结构
+############################################################
+
+deleteall;
+clear;
+
+um = 1e-6;
+nm = 1e-9;
+BU = 100*um;
+
+film_material = "VO2 20";
+substrate_material = "SiO2 (Glass) - Palik";
+lambda0 = 5*um;
+
+film_length = 1.0*BU;
+film_width = 3.0*BU;
+film_t = 200*nm;
+
+fold_k = 0.6;
+fold_b = -0.2*BU;
+curl_radius = 0.18*BU;
+max_curl_angle = pi*1.1;
+
+Nx = 44;
+Ny = 66;
+dx = film_length/Nx;
+dy = film_width/Ny;
+half_length = film_length/2;
+half_width = film_width/2;
+
+fold_dir_x = 1/sqrt(1+fold_k^2);
+fold_dir_y = fold_k/sqrt(1+fold_k^2);
+fold_normal_x = fold_k/sqrt(1+fold_k^2);
+fold_normal_y = -1/sqrt(1+fold_k^2);
+max_dist = 1.6*BU;
+
+addstructuregroup;
+set("name","Helix_rect_tiles");
+
+for(ix=1:Nx){
+    x0 = -half_length + (ix-0.5)*dx;
+    for(iy=1:Ny){
+        y0 = -half_width + (iy-0.5)*dy;
+        side = y0 - (fold_k*x0 + fold_b);
+
+        if(side < 0){
+            d = abs(side);
+            theta = d/max_dist*max_curl_angle;
+            if(theta > max_curl_angle){
+                theta = max_curl_angle;
+            }
+            apx = x0;
+            apy = y0-fold_b;
+            tt = apx*fold_dir_x + apy*fold_dir_y;
+            bx = fold_dir_x*tt;
+            by = fold_b + fold_dir_y*tt;
+            x = bx + fold_normal_x*curl_radius*sin(theta);
+            y = by + fold_normal_y*curl_radius*sin(theta);
+            z = curl_radius*(1-cos(theta));
+
+            # rotate the small tile roughly according to local curl angle
+            alpha_z = atan(fold_k)*180/pi;
+            alpha_y = theta*180/pi*0.5;
+        } else {
+            x = x0;
+            y = y0;
+            z = 0;
+            alpha_z = 0;
+            alpha_y = 0;
+        }
+
+        addrect;
+        set("name","helix_tile_"+num2str(ix)+"_"+num2str(iy));
+        set("x",x);
+        set("x span",dx*1.04);
+        set("y",y);
+        set("y span",dy*1.04);
+        set("z",z);
+        set("z span",film_t);
+        set("first axis","z");
+        set("rotation 1",alpha_z);
+        set("second axis","y");
+        set("rotation 2",-alpha_y);
+        set("material",film_material);
+        addtogroup("Helix_rect_tiles");
+    }
+}
+
+xmin = -110e-6;
+xmax = 80e-6;
+ymin = -120e-6;
+ymax = 180e-6;
+zmin = -15e-6;
+zmax = 65e-6;
+xc = (xmin+xmax)/2;
+yc = (ymin+ymax)/2;
+zc = (zmin+zmax)/2;
+xs = xmax-xmin;
+ys = ymax-ymin;
+zs = zmax-zmin;
+
+addrect;
+set("name","Si_substrate");
+set("x",xc);
+set("x span",xs);
+set("y",yc);
+set("y span",ys);
+set("z",zmin-5e-6);
+set("z span",10e-6);
+set("material",substrate_material);
+
+addfdtd;
+set("dimension",2);
+set("x",xc);
+set("x span",xs);
+set("y",yc);
+set("y span",ys);
+set("z",zc);
+set("z span",zs);
+set("mesh accuracy",1);
+set("x min bc","PML");
+set("x max bc","PML");
+set("y min bc","PML");
+set("y max bc","PML");
+set("z min bc","PML");
+set("z max bc","PML");
+
+addplane;
+set("name","src_x_backward");
+set("plane wave type","BFAST");
+set("injection axis","x");
+set("direction","backward");
+set("angle theta",30);
+set("angle phi",30);
+set("polarization angle",90);
+set("x",xmax-5e-6);
+set("y",yc);
+set("y span",ys);
+set("z",zc);
+set("z span",zs);
+set("wavelength start",lambda0);
+set("wavelength stop",lambda0);
+
+addprofile; set("name","xy_mid"); set("monitor type",7);
+set("x",xc); set("x span",0.9*xs); set("y",yc); set("y span",0.9*ys); set("z",25e-6);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","xy_bottom"); set("monitor type",7);
+set("x",xc); set("x span",0.9*xs); set("y",yc); set("y span",0.9*ys); set("z",0);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","yz_center"); set("monitor type",5);
+set("x",xc); set("y",yc); set("y span",0.9*ys); set("z",zc); set("z span",0.9*zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","yz_side"); set("monitor type",5);
+set("x",40e-6); set("y",yc); set("y span",0.9*ys); set("z",zc); set("z span",0.9*zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","xz_center"); set("monitor type",6);
+set("x",xc); set("x span",0.9*xs); set("y",yc); set("z",zc); set("z span",0.9*zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+# run;
