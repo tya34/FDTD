@@ -1,0 +1,195 @@
+############################################################
+# Taper_FDTD.txt
+# FDTD script based on FDTD/taper/taper.lsf
+############################################################
+
+deleteall;
+clear;
+
+um = 1e-6;
+nm = 1e-9;
+film_material = "VO2 20";
+substrate_material = "SiO2 (Glass) - Palik";
+lambda0 = 5e-6;
+
+N = 100;
+H = 200e-6;
+R = 50e-6;
+t = 200e-9;
+theta_start = 5;
+theta_stop = -5;
+tilt_angle = -atan(0.25)*180/pi;
+
+addstructuregroup;
+set("name","taper_model");
+
+for(i=1:N){
+    z1 = (i-1)/N*H;
+    z2 = i/N*H;
+    zc = (z1+z2)/2;
+    r_outer = R*(1-zc/H);
+    r_inner = r_outer - t;
+    if(r_inner < 0){
+        r_inner = 1e-9;
+    }
+
+    dz = z2-z1;
+    addring;
+    set("name","ring_"+num2str(i));
+    set("x",0);
+    set("y",0);
+    set("z",zc);
+    set("outer radius",r_outer);
+    set("inner radius",r_inner);
+    set("z span",dz);
+    set("theta start",theta_start);
+    set("theta stop",theta_stop);
+    set("material",film_material);
+    addtogroup("taper_model");
+}
+
+select("::model::taper_model");
+set("first axis","y");
+set("rotation 1",tilt_angle);
+
+xmin = -55e-6;
+xmax = 70e-6;
+ymin = -75e-6;
+ymax = 75e-6;
+zmin = -20e-6;
+zmax = 230e-6;
+xc = (xmin+xmax)/2;
+yc = (ymin+ymax)/2;
+zc = (zmin+zmax)/2;
+xs = xmax-xmin;
+ys = ymax-ymin;
+zs = zmax-zmin;
+
+addrect;
+set("name","substrate_rect");
+set("x",-40e-6);
+set("x span",15e-6);
+set("y",0);
+set("y span",100e-6);
+set("z",100e-6);
+set("z span",220e-6);
+set("material",substrate_material);
+
+addfdtd;
+set("dimension",2);
+set("x",xc);
+set("x span",xs);
+set("y",yc);
+set("y span",ys);
+set("z",zc);
+set("z span",zs);
+set("mesh accuracy",1);
+set("x min bc","PML");
+set("x max bc","PML");
+set("y min bc","PML");
+set("y max bc","PML");
+set("z min bc","PML");
+set("z max bc","PML");
+
+addplane;
+set("name","src_x_backward");
+set("plane wave type","BFAST");
+set("injection axis","x");
+set("direction","backward");
+set("angle theta",30);
+set("angle phi",30);
+set("polarization angle",90);
+set("x",xmax-5e-6);
+set("y",0);
+set("y span",ys);
+set("z",zc);
+set("z span",zs);
+set("wavelength start",lambda0);
+set("wavelength stop",lambda0);
+
+addprofile;
+set("name","xy_mid");
+set("monitor type",7);
+set("x",xc);
+set("x span",0.9*xs);
+set("y",0);
+set("y span",0.9*ys);
+set("z",100e-6);
+set("override global monitor settings",1);
+set("use source limits",1);
+set("frequency points",1);
+
+addprofile;
+set("name","xy_bottom");
+set("monitor type",7);
+set("x",xc);
+set("x span",0.9*xs);
+set("y",0);
+set("y span",0.9*ys);
+set("z",0);
+set("override global monitor settings",1);
+set("use source limits",1);
+set("frequency points",1);
+
+addprofile;
+set("name","xy_top");
+set("monitor type",7);
+set("x",xc);
+set("x span",0.9*xs);
+set("y",0);
+set("y span",0.9*ys);
+set("z",180e-6);
+set("override global monitor settings",1);
+set("use source limits",1);
+set("frequency points",1);
+
+addprofile;
+set("name","yz_center");
+set("monitor type",5);
+set("x",0);
+set("y",0);
+set("y span",0.9*ys);
+set("z",100e-6);
+set("z span",0.9*zs);
+set("override global monitor settings",1);
+set("use source limits",1);
+set("frequency points",1);
+
+addprofile;
+set("name","yz_left");
+set("monitor type",5);
+set("x",-25e-6);
+set("y",0);
+set("y span",0.9*ys);
+set("z",100e-6);
+set("z span",0.9*zs);
+set("override global monitor settings",1);
+set("use source limits",1);
+set("frequency points",1);
+
+addprofile;
+set("name","xz_center");
+set("monitor type",6);
+set("x",xc);
+set("x span",0.9*xs);
+set("y",0);
+set("z",100e-6);
+set("z span",0.9*zs);
+set("override global monitor settings",1);
+set("use source limits",1);
+set("frequency points",1);
+
+addprofile;
+set("name","xz_side");
+set("monitor type",6);
+set("x",xc);
+set("x span",0.9*xs);
+set("y",25e-6);
+set("z",100e-6);
+set("z span",0.9*zs);
+set("override global monitor settings",1);
+set("use source limits",1);
+set("frequency points",1);
+
+# Change source angle theta/phi for multi-angle runs.
+# run;
