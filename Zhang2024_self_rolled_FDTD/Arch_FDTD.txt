@@ -1,0 +1,204 @@
+############################################################
+# Arch_FDTD.txt
+# Zhang 2024 self-rolled photodetector geometry.
+# W/L = 30/150 um, VO2 thickness = 200 nm.
+# Shape-controlled arch morphology:
+# one L=0 edge fixed on the substrate, with a linearly increasing
+# lift along L and a parabolic cross-section across W.
+############################################################
+
+deleteall;
+clear;
+
+um = 1e-6;
+nm = 1e-9;
+
+film_material = "VO2 20";
+substrate_material = "SiO2 (Glass) - Palik";
+lambda0 = 5*um;
+
+pattern_W = 30*um;
+pattern_L = 150*um;
+film_t = 200*nm;
+substrate_top_z = 0;
+
+Nx = 80;
+Ny = 160;
+Nxv = Nx+1;
+Nyv = Ny+1;
+Nsurf = Nxv*Nyv;
+half_W = pattern_W/2;
+arch_center_tip_z = 10*um;
+arch_edge_tip_z = 20*um;
+
+addstructuregroup;
+set("name","Arch_W30_L150_group");
+
+px = matrix(Nsurf,1);
+py = matrix(Nsurf,1);
+pz = matrix(Nsurf,1);
+
+for(ix=1:Nxv){
+    x = -half_W + (ix-1)/Nx*pattern_W;
+    width_t = x/half_W;
+    for(iy=1:Nyv){
+        length_t = (iy-1)/Ny;
+        lift_tip_z = arch_center_tip_z + (arch_edge_tip_z-arch_center_tip_z)*width_t^2;
+        id = (iy-1)*Nxv + ix;
+        px(id) = x;
+        py(id) = length_t*pattern_L;
+        pz(id) = length_t*lift_tip_z;
+    }
+}
+
+vtx = matrix(2*Nsurf,3);
+for(ix=1:Nxv){
+    for(iy=1:Nyv){
+        id = (iy-1)*Nxv + ix;
+        if(ix == 1){ idx1 = id+1; idx0 = id; } else { if(ix == Nxv){ idx1 = id; idx0 = id-1; } else { idx1 = id+1; idx0 = id-1; } }
+        if(iy == 1){ idy1 = id+Nxv; idy0 = id; } else { if(iy == Nyv){ idy1 = id; idy0 = id-Nxv; } else { idy1 = id+Nxv; idy0 = id-Nxv; } }
+        txv_x = px(idx1)-px(idx0); txv_y = py(idx1)-py(idx0); txv_z = pz(idx1)-pz(idx0);
+        tyv_x = px(idy1)-px(idy0); tyv_y = py(idy1)-py(idy0); tyv_z = pz(idy1)-pz(idy0);
+        normal_x = txv_y*tyv_z - txv_z*tyv_y;
+        normal_y = txv_z*tyv_x - txv_x*tyv_z;
+        normal_z = txv_x*tyv_y - txv_y*tyv_x;
+        normal_mag = sqrt(normal_x^2 + normal_y^2 + normal_z^2);
+        normal_x = normal_x/normal_mag; normal_y = normal_y/normal_mag; normal_z = normal_z/normal_mag;
+        vtx(id,1)=px(id)+0.5*film_t*normal_x; vtx(id,2)=py(id)+0.5*film_t*normal_y; vtx(id,3)=pz(id)+0.5*film_t*normal_z;
+        vtx(id+Nsurf,1)=px(id)-0.5*film_t*normal_x; vtx(id+Nsurf,2)=py(id)-0.5*film_t*normal_y; vtx(id+Nsurf,3)=pz(id)-0.5*film_t*normal_z;
+    }
+}
+
+Nfacets = 4*Nx*Ny + 4*Nx + 4*Ny;
+fct = matrix(4,1,Nfacets);
+fi = 1;
+for(ix=1:Nx){
+    for(iy=1:Ny){
+        id00 = (iy-1)*Nxv + ix; id10 = id00 + 1; id01 = id00 + Nxv; id11 = id01 + 1;
+        b00 = id00 + Nsurf; b10 = id10 + Nsurf; b01 = id01 + Nsurf; b11 = id11 + Nsurf;
+        fct(1,1,fi)=id00; fct(2,1,fi)=id10; fct(3,1,fi)=id11; fi=fi+1;
+        fct(1,1,fi)=id00; fct(2,1,fi)=id11; fct(3,1,fi)=id01; fi=fi+1;
+        fct(1,1,fi)=b00; fct(2,1,fi)=b11; fct(3,1,fi)=b10; fi=fi+1;
+        fct(1,1,fi)=b00; fct(2,1,fi)=b01; fct(3,1,fi)=b11; fi=fi+1;
+    }
+}
+for(ix=1:Nx){
+    id0 = ix; id1 = ix+1; b0 = id0 + Nsurf; b1 = id1 + Nsurf;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=b0; fi=fi+1;
+    fct(1,1,fi)=id0; fct(2,1,fi)=id1; fct(3,1,fi)=b1; fi=fi+1;
+    id0 = Ny*Nxv + ix; id1 = id0 + 1; b0 = id0 + Nsurf; b1 = id1 + Nsurf;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b0; fct(3,1,fi)=b1; fi=fi+1;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=id1; fi=fi+1;
+}
+for(iy=1:Ny){
+    id0 = (iy-1)*Nxv + 1; id1 = id0 + Nxv; b0 = id0 + Nsurf; b1 = id1 + Nsurf;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b0; fct(3,1,fi)=b1; fi=fi+1;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=id1; fi=fi+1;
+    id0 = (iy-1)*Nxv + Nxv; id1 = id0 + Nxv; b0 = id0 + Nsurf; b1 = id1 + Nsurf;
+    fct(1,1,fi)=id0; fct(2,1,fi)=id1; fct(3,1,fi)=b1; fi=fi+1;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=b0; fi=fi+1;
+}
+
+film_min_z = vtx(1,3);
+for(vertex_index=2:2*Nsurf){
+    if(vtx(vertex_index,3) < film_min_z){ film_min_z = vtx(vertex_index,3); }
+}
+z_shift = substrate_top_z - film_min_z;
+for(vertex_index=1:2*Nsurf){ vtx(vertex_index,3) = vtx(vertex_index,3) + z_shift; }
+
+addplanarsolid;
+set("vertices",vtx);
+set("facets",fct);
+set("name","Arch_W30_L150_VO2");
+set("material",film_material);
+addtogroup("Arch_W30_L150_group");
+
+xmin = -55*um; xmax = 55*um;
+ymin = -25*um; ymax = pattern_L + 25*um;
+zmin = substrate_top_z; zmax = substrate_top_z + arch_edge_tip_z + 15*um;
+xc = (xmin+xmax)/2; yc = (ymin+ymax)/2; zc = (zmin+zmax)/2;
+xs = xmax-xmin; ys = ymax-ymin; zs = zmax-zmin;
+
+addrect; set("name","SiO2_substrate");
+set("x",xc); set("x span",xs); set("y",yc); set("y span",ys); set("z",zmin-5*um); set("z span",10*um);
+set("material",substrate_material);
+
+fdtd_margin_x = 10*um;
+fdtd_margin_y = 10*um;
+fdtd_substrate_depth = 4*um;
+source_gap_above_arch = 8*um;
+source_top_gap = 4*um;
+
+fdtd_xmin = -half_W - fdtd_margin_x;
+fdtd_xmax = half_W + fdtd_margin_x;
+fdtd_ymin = -fdtd_margin_y;
+fdtd_ymax = pattern_L + fdtd_margin_y;
+fdtd_zmin = substrate_top_z - fdtd_substrate_depth;
+source_z = substrate_top_z + arch_edge_tip_z + source_gap_above_arch;
+fdtd_zmax = source_z + source_top_gap;
+
+fdtd_xc = (fdtd_xmin+fdtd_xmax)/2;
+fdtd_yc = (fdtd_ymin+fdtd_ymax)/2;
+fdtd_zc = (fdtd_zmin+fdtd_zmax)/2;
+fdtd_xs = fdtd_xmax-fdtd_xmin;
+fdtd_ys = fdtd_ymax-fdtd_ymin;
+fdtd_zs = fdtd_zmax-fdtd_zmin;
+
+monitor_zmin = substrate_top_z - 3*um;
+monitor_zmax = source_z - 1*um;
+monitor_zc = (monitor_zmin+monitor_zmax)/2;
+monitor_zs = monitor_zmax-monitor_zmin;
+
+addfdtd;
+set("dimension",2);
+set("x",fdtd_xc);
+set("x span",fdtd_xs);
+set("y",fdtd_yc);
+set("y span",fdtd_ys);
+set("z",fdtd_zc);
+set("z span",fdtd_zs);
+set("mesh accuracy",3);
+set("x min bc","PML");
+set("x max bc","PML");
+set("y min bc","PML");
+set("y max bc","PML");
+set("z min bc","PML");
+set("z max bc","PML");
+
+addplane;
+set("name","src_z_down");
+set("plane wave type","BFAST");
+set("injection axis","z");
+set("direction","backward");
+set("angle theta",0);
+set("angle phi",0);
+set("polarization angle",90);
+set("x",fdtd_xc);
+set("x span",fdtd_xs);
+set("y",fdtd_yc);
+set("y span",fdtd_ys);
+set("z",source_z);
+set("wavelength start",lambda0);
+set("wavelength stop",lambda0);
+
+addprofile; set("name","xy_above_arch"); set("monitor type",7);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",substrate_top_z + arch_edge_tip_z + 3*um);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","xy_in_substrate"); set("monitor type",7);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",substrate_top_z - 2*um);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","yz_center"); set("monitor type",5);
+set("x",0); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","yz_side"); set("monitor type",5);
+set("x",0.8*half_W); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","xz_mid_L"); set("monitor type",6);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",0.5*pattern_L); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+# run;
