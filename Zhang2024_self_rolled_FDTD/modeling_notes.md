@@ -8,7 +8,7 @@
 
 - 材料：VO2 薄膜，SiO2 基底。
 - VO2 薄膜厚度：200 nm。
-- Ring 和 Tube 脚本只保留几何和基底；Arch 已按最新要求加入紧凑 FDTD 区域、光源和 monitor。
+- Ring、Tube 和 Arch 均已按最新要求加入紧凑 FDTD 区域、向 `-z` 方向入射的平面波光源和 profile monitor。
 - Ring 和 Tube 改用 Lumerical 内置 `addring` primitive，不再手写 `addplanarsolid` 网格。
 
 ## Ring
@@ -20,6 +20,8 @@
 - 轴向宽度：`pattern_W = 30 um`，通过 `z span` 设置。
 - 圆环中心位置：`x = 0`，`y = 0`，`z = 0`。
 - SiO2 基底顶面：`substrate_top_z = -outer_R`，使圆环最低点正好接触基底。
+- 当前已加入紧凑 FDTD 区域；光源为向 `-z` 方向入射的平面波，偏振角 `90 deg`，mesh accuracy 为 `3`。
+- Monitor 全部位于光源下方，其中 `xy_in_substrate` 和竖直截面 monitor 包含一部分衬底。
 
 ## Tube
 
@@ -30,6 +32,8 @@
 - 轴向宽度：`pattern_W = 250 um`，通过 `z span` 设置。
 - 圆筒中心位置：`x = 0`，`y = 0`，`z = 0`。
 - SiO2 基底顶面：`substrate_top_z = -outer_R`，使圆筒最低点正好接触基底。
+- 当前已加入紧凑 FDTD 区域；光源为向 `-z` 方向入射的平面波，偏振角 `90 deg`，mesh accuracy 为 `3`。
+- Monitor 全部位于光源下方，其中 `xy_in_substrate` 和竖直截面 monitor 包含一部分衬底。
 
 ## Arch
 
@@ -50,6 +54,7 @@
 2. 讨论后确认 ring 和 tube 可以直接使用 Lumerical Structure 中的 ring primitive。
 3. 将 ring 半径固定为 100 um，tube 半径固定为 50 um。
 4. 根据要求将 ring/tube 的中心位置放到坐标原点，随后根据外半径调整衬底高度。
+5. 为 Arch、Ring 和 Tube 统一补充紧凑 FDTD 区域、`-z` 入射平面波、`90 deg` 偏振、mesh accuracy `3` 和包含衬底区域的 monitors。
 
 ## 待继续结构
 
