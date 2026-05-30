@@ -12,6 +12,7 @@ nm = 1e-9;
 
 film_material = "VO2 20";
 substrate_material = "SiO2 (Glass) - Palik";
+lambda0 = 5*um;
 
 pattern_W = 30*um;
 film_t = 200*nm;
@@ -63,5 +64,83 @@ set("y span",ys);
 set("z",zmin-5*um);
 set("z span",10*um);
 set("material",substrate_material);
+
+fdtd_margin_x = 5*um;
+fdtd_margin_y = 10*um;
+fdtd_substrate_depth = 4*um;
+source_gap_above_ring = 8*um;
+source_top_gap = 4*um;
+
+fdtd_xmin = -0.5*pattern_W - fdtd_margin_x;
+fdtd_xmax = 0.5*pattern_W + fdtd_margin_x;
+fdtd_ymin = -outer_R - fdtd_margin_y;
+fdtd_ymax = outer_R + fdtd_margin_y;
+fdtd_zmin = substrate_top_z - fdtd_substrate_depth;
+source_z = outer_R + source_gap_above_ring;
+fdtd_zmax = source_z + source_top_gap;
+
+fdtd_xc = (fdtd_xmin+fdtd_xmax)/2;
+fdtd_yc = (fdtd_ymin+fdtd_ymax)/2;
+fdtd_zc = (fdtd_zmin+fdtd_zmax)/2;
+fdtd_xs = fdtd_xmax-fdtd_xmin;
+fdtd_ys = fdtd_ymax-fdtd_ymin;
+fdtd_zs = fdtd_zmax-fdtd_zmin;
+
+monitor_zmin = substrate_top_z - 3*um;
+monitor_zmax = source_z - 1*um;
+monitor_zc = (monitor_zmin+monitor_zmax)/2;
+monitor_zs = monitor_zmax-monitor_zmin;
+
+addfdtd;
+set("dimension",2);
+set("x",fdtd_xc);
+set("x span",fdtd_xs);
+set("y",fdtd_yc);
+set("y span",fdtd_ys);
+set("z",fdtd_zc);
+set("z span",fdtd_zs);
+set("mesh accuracy",3);
+set("x min bc","PML");
+set("x max bc","PML");
+set("y min bc","PML");
+set("y max bc","PML");
+set("z min bc","PML");
+set("z max bc","PML");
+
+addplane;
+set("name","src_z_down");
+set("plane wave type","BFAST");
+set("injection axis","z");
+set("direction","backward");
+set("angle theta",0);
+set("angle phi",0);
+set("polarization angle",90);
+set("x",fdtd_xc);
+set("x span",fdtd_xs);
+set("y",fdtd_yc);
+set("y span",fdtd_ys);
+set("z",source_z);
+set("wavelength start",lambda0);
+set("wavelength stop",lambda0);
+
+addprofile; set("name","xy_above_ring"); set("monitor type",7);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",outer_R + 3*um);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","xy_in_substrate"); set("monitor type",7);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",substrate_top_z - 2*um);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","yz_center"); set("monitor type",5);
+set("x",0); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","yz_side"); set("monitor type",5);
+set("x",0.4*pattern_W); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","xz_center"); set("monitor type",6);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",0); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
 # run;
