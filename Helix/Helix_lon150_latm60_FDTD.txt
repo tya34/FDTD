@@ -1,0 +1,280 @@
+############################################################
+# Helix_lon150_latm60_FDTD.txt
+# Geometry-only oblique folded helix-like ribbon model.
+# Unrolled W/L = 50/150 um, VO2 thickness = 200 nm.
+#
+# The model approximates a rectangle folded along a 45 deg line.
+# One side remains close to the original flat rectangle, while the
+# folded side is smoothly curled instead of sharply creased. The
+# far short edge becomes perpendicular to its original direction
+# and overhangs the original long edge by about 20 um.
+############################################################
+
+deleteall;
+clear;
+
+um = 1e-6;
+nm = 1e-9;
+
+film_material = "VO2 20";
+substrate_material = "SiO2 (Glass) - Palik";
+lambda0 = 5*um;
+
+pattern_W = 50*um;
+pattern_L = 150*um;
+film_t = 200*nm;
+substrate_top_z = 0;
+
+Nx = 90;
+Ny = 180;
+Nxv = Nx+1;
+Nyv = Ny+1;
+Nsurf = Nxv*Nyv;
+half_W = pattern_W/2;
+
+edge_overhang = 20*um;
+fold_c = pattern_L - half_W - edge_overhang;
+curl_width = 20*um;
+pre_lift_slope = 0.10;
+fold_extra_lift = 14*um;
+fold_start_tangent = 0.35;
+fold_end_tangent = 0.20;
+post_lift_slope = 0.07;
+
+addstructuregroup;
+set("name","Helix_W50_L150_group");
+
+px = matrix(Nsurf,1);
+py = matrix(Nsurf,1);
+pz = matrix(Nsurf,1);
+
+for(ix=1:Nxv){
+    flat_x = -half_W + (ix-1)/Nx*pattern_W;
+    for(iy=1:Nyv){
+        flat_y = (iy-1)/Ny*pattern_L;
+
+        fold_s = (flat_y - flat_x - fold_c)/sqrt(2);
+        fold_q = (fold_s + 0.5*curl_width)/curl_width;
+        if(fold_q < 0){ fold_t = 0; } else {
+            if(fold_q > 1){ fold_t = 1; } else {
+                fold_t = fold_q^2*(3-2*fold_q);
+            }
+        }
+
+        reflected_x = flat_y - fold_c;
+        reflected_y = flat_x + fold_c;
+
+        if(fold_q < 0){ fold_u = 0; } else {
+            if(fold_q > 1){ fold_u = 1; } else {
+                fold_u = fold_q;
+            }
+        }
+        fold_extra_t = (fold_start_tangent + fold_end_tangent - 2)*fold_u^3 + (3 - 2*fold_start_tangent - fold_end_tangent)*fold_u^2 + fold_start_tangent*fold_u;
+
+        fold_end_y = flat_x + fold_c + 0.5*sqrt(2)*curl_width;
+        if(flat_y < fold_end_y){
+            post_distance = 0;
+        } else {
+            post_distance = flat_y - fold_end_y;
+            if(post_distance > pattern_L - fold_end_y){
+                post_distance = pattern_L - fold_end_y;
+            }
+        }
+
+        base_z = pre_lift_slope*flat_y;
+        fold_z = fold_extra_lift*fold_extra_t;
+        post_z = post_lift_slope*post_distance;
+
+        id = (iy-1)*Nxv + ix;
+        px(id) = (1-fold_t)*flat_x + fold_t*reflected_x;
+        py(id) = (1-fold_t)*flat_y + fold_t*reflected_y;
+        pz(id) = base_z + fold_z + post_z;
+    }
+}
+
+vtx = matrix(2*Nsurf,3);
+for(ix=1:Nxv){
+    for(iy=1:Nyv){
+        id = (iy-1)*Nxv + ix;
+        if(ix == 1){ idx1 = id+1; idx0 = id; } else { if(ix == Nxv){ idx1 = id; idx0 = id-1; } else { idx1 = id+1; idx0 = id-1; } }
+        if(iy == 1){ idy1 = id+Nxv; idy0 = id; } else { if(iy == Nyv){ idy1 = id; idy0 = id-Nxv; } else { idy1 = id+Nxv; idy0 = id-Nxv; } }
+        txv_x = px(idx1)-px(idx0); txv_y = py(idx1)-py(idx0); txv_z = pz(idx1)-pz(idx0);
+        tyv_x = px(idy1)-px(idy0); tyv_y = py(idy1)-py(idy0); tyv_z = pz(idy1)-pz(idy0);
+        normal_x = txv_y*tyv_z - txv_z*tyv_y;
+        normal_y = txv_z*tyv_x - txv_x*tyv_z;
+        normal_z = txv_x*tyv_y - txv_y*tyv_x;
+        normal_mag = sqrt(normal_x^2 + normal_y^2 + normal_z^2);
+        normal_x = normal_x/normal_mag; normal_y = normal_y/normal_mag; normal_z = normal_z/normal_mag;
+        vtx(id,1)=px(id)+0.5*film_t*normal_x; vtx(id,2)=py(id)+0.5*film_t*normal_y; vtx(id,3)=pz(id)+0.5*film_t*normal_z;
+        vtx(id+Nsurf,1)=px(id)-0.5*film_t*normal_x; vtx(id+Nsurf,2)=py(id)-0.5*film_t*normal_y; vtx(id+Nsurf,3)=pz(id)-0.5*film_t*normal_z;
+    }
+}
+
+Nfacets = 4*Nx*Ny + 4*Nx + 4*Ny;
+fct = matrix(4,1,Nfacets);
+fi = 1;
+for(ix=1:Nx){
+    for(iy=1:Ny){
+        id00 = (iy-1)*Nxv + ix; id10 = id00 + 1; id01 = id00 + Nxv; id11 = id01 + 1;
+        b00 = id00 + Nsurf; b10 = id10 + Nsurf; b01 = id01 + Nsurf; b11 = id11 + Nsurf;
+        fct(1,1,fi)=id00; fct(2,1,fi)=id10; fct(3,1,fi)=id11; fi=fi+1;
+        fct(1,1,fi)=id00; fct(2,1,fi)=id11; fct(3,1,fi)=id01; fi=fi+1;
+        fct(1,1,fi)=b00; fct(2,1,fi)=b11; fct(3,1,fi)=b10; fi=fi+1;
+        fct(1,1,fi)=b00; fct(2,1,fi)=b01; fct(3,1,fi)=b11; fi=fi+1;
+    }
+}
+for(ix=1:Nx){
+    id0 = ix; id1 = ix+1; b0 = id0 + Nsurf; b1 = id1 + Nsurf;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=b0; fi=fi+1;
+    fct(1,1,fi)=id0; fct(2,1,fi)=id1; fct(3,1,fi)=b1; fi=fi+1;
+    id0 = Ny*Nxv + ix; id1 = id0 + 1; b0 = id0 + Nsurf; b1 = id1 + Nsurf;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b0; fct(3,1,fi)=b1; fi=fi+1;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=id1; fi=fi+1;
+}
+for(iy=1:Ny){
+    id0 = (iy-1)*Nxv + 1; id1 = id0 + Nxv; b0 = id0 + Nsurf; b1 = id1 + Nsurf;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b0; fct(3,1,fi)=b1; fi=fi+1;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=id1; fi=fi+1;
+    id0 = (iy-1)*Nxv + Nxv; id1 = id0 + Nxv; b0 = id0 + Nsurf; b1 = id1 + Nsurf;
+    fct(1,1,fi)=id0; fct(2,1,fi)=id1; fct(3,1,fi)=b1; fi=fi+1;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=b0; fi=fi+1;
+}
+
+film_min_x = vtx(1,1); film_max_x = vtx(1,1);
+film_min_y = vtx(1,2); film_max_y = vtx(1,2);
+film_min_z = vtx(1,3); film_max_z = vtx(1,3);
+for(vertex_index=2:2*Nsurf){
+    if(vtx(vertex_index,1) < film_min_x){ film_min_x = vtx(vertex_index,1); }
+    if(vtx(vertex_index,1) > film_max_x){ film_max_x = vtx(vertex_index,1); }
+    if(vtx(vertex_index,2) < film_min_y){ film_min_y = vtx(vertex_index,2); }
+    if(vtx(vertex_index,2) > film_max_y){ film_max_y = vtx(vertex_index,2); }
+    if(vtx(vertex_index,3) < film_min_z){ film_min_z = vtx(vertex_index,3); }
+    if(vtx(vertex_index,3) > film_max_z){ film_max_z = vtx(vertex_index,3); }
+}
+z_shift = substrate_top_z - film_min_z;
+for(vertex_index=1:2*Nsurf){
+    vtx(vertex_index,3) = vtx(vertex_index,3) + z_shift;
+}
+film_max_z = film_max_z + z_shift;
+film_min_z = substrate_top_z;
+
+addplanarsolid;
+set("vertices",vtx);
+set("facets",fct);
+set("name","Helix_W50_L150_VO2");
+set("material",film_material);
+addtogroup("Helix_W50_L150_group");
+
+substrate_margin_x = 25*um;
+substrate_margin_y = 25*um;
+xmin = film_min_x - substrate_margin_x;
+xmax = film_max_x + substrate_margin_x;
+ymin = film_min_y - substrate_margin_y;
+ymax = film_max_y + substrate_margin_y;
+zmin = substrate_top_z;
+xc = (xmin+xmax)/2;
+yc = (ymin+ymax)/2;
+xs = xmax-xmin;
+ys = ymax-ymin;
+
+addrect;
+set("name","SiO2_substrate");
+set("x",xc);
+set("x span",xs);
+set("y",yc);
+set("y span",ys);
+set("z",zmin-5*um);
+set("z span",10*um);
+set("material",substrate_material);
+
+fdtd_margin_x = 10*um;
+fdtd_margin_y = 10*um;
+fdtd_substrate_depth = 4*um;
+source_gap_above_helix = 8*um;
+source_top_gap = 4*um;
+
+fdtd_xmin = film_min_x - fdtd_margin_x;
+fdtd_xmax = film_max_x + fdtd_margin_x;
+fdtd_ymin = film_min_y - fdtd_margin_y;
+fdtd_ymax = film_max_y + fdtd_margin_y;
+fdtd_zmin = substrate_top_z - fdtd_substrate_depth;
+source_z = film_max_z + source_gap_above_helix;
+fdtd_zmax = source_z + source_top_gap;
+
+fdtd_xc = (fdtd_xmin+fdtd_xmax)/2;
+fdtd_yc = (fdtd_ymin+fdtd_ymax)/2;
+fdtd_zc = (fdtd_zmin+fdtd_zmax)/2;
+fdtd_xs = fdtd_xmax-fdtd_xmin;
+fdtd_ys = fdtd_ymax-fdtd_ymin;
+fdtd_zs = fdtd_zmax-fdtd_zmin;
+
+monitor_zmin = substrate_top_z - 3*um;
+monitor_zmax = source_z - 1*um;
+monitor_zc = (monitor_zmin+monitor_zmax)/2;
+monitor_zs = monitor_zmax-monitor_zmin;
+
+addfdtd;
+set("dimension",2);
+set("x",fdtd_xc);
+set("x span",fdtd_xs);
+set("y",fdtd_yc);
+set("y span",fdtd_ys);
+set("z",fdtd_zc);
+set("z span",fdtd_zs);
+set("mesh accuracy",3);
+set("x min bc","PML");
+set("x max bc","PML");
+set("y min bc","PML");
+set("y max bc","PML");
+set("z min bc","PML");
+set("z max bc","PML");
+
+# User spherical direction: longitude phi = 150 deg, latitude theta = -60 deg.
+# Target propagation unit vector toward the structure center:
+# kx = 0.433013, ky = 0.866025, kz = -0.25.
+# The injection axis is selected from the largest |k| component to avoid grazing source injection.
+source_longitude_deg = 150;
+source_latitude_deg = -60;
+target_kx = 0.433013;
+target_ky = 0.866025;
+target_kz = -0.25;
+fdtd_source_theta_deg = 30;
+fdtd_source_phi_deg = 120;
+
+addplane;
+set("name","src_lon150_latm60");
+set("plane wave type","BFAST");
+set("injection axis","y");
+set("direction","forward");
+set("angle theta",fdtd_source_theta_deg);
+set("angle phi",fdtd_source_phi_deg);
+set("polarization angle",90);
+set("x",fdtd_xc);
+set("x span",fdtd_xs);
+set("y",fdtd_ymin + 0.5*source_top_gap);
+set("z",fdtd_zc);
+set("z span",fdtd_zs);
+set("wavelength start",lambda0);
+set("wavelength stop",lambda0);
+
+addprofile; set("name","xy_lower_through_helix"); set("monitor type",7);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",film_min_z + 0.35*(film_max_z-film_min_z));
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","xy_upper_through_helix"); set("monitor type",7);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",film_min_z + 0.75*(film_max_z-film_min_z));
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","yz_center"); set("monitor type",5);
+set("x",fdtd_xc); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","yz_side"); set("monitor type",5);
+set("x",fdtd_xc + 0.25*(film_max_x-film_min_x)); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","xz_center"); set("monitor type",6);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+# run;

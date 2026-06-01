@@ -1,0 +1,158 @@
+############################################################
+# Tube_lon150_latp30_FDTD.txt
+# Direct ring primitive model used as a rolled tube.
+# W/L = 250/150 um, VO2 thickness = 200 nm, tube radius = 50 um.
+############################################################
+
+deleteall;
+clear;
+
+um = 1e-6;
+nm = 1e-9;
+
+film_material = "VO2 20";
+substrate_material = "SiO2 (Glass) - Palik";
+lambda0 = 5*um;
+
+pattern_W = 250*um;
+film_t = 200*nm;
+tube_R = 50*um;
+theta_start = 0;
+theta_stop = 360;
+
+inner_R = tube_R - 0.5*film_t;
+outer_R = tube_R + 0.5*film_t;
+substrate_top_z = -outer_R;
+
+addstructuregroup;
+set("name","Tube_W250_R50_group");
+
+addring;
+set("name","Tube_W250_R50_VO2");
+set("material",film_material);
+set("x",0);
+set("y",0);
+set("z",0);
+set("inner radius",inner_R);
+set("outer radius",outer_R);
+set("z span",pattern_W);
+set("theta start",theta_start);
+set("theta stop",theta_stop);
+set("first axis","y");
+set("rotation 1",90);
+addtogroup("Tube_W250_R50_group");
+
+xmin = -0.6*pattern_W;
+xmax = 0.6*pattern_W;
+ymin = -1.25*outer_R;
+ymax = 1.25*outer_R;
+zmin = substrate_top_z;
+zmax = 1.3*outer_R;
+xc = (xmin+xmax)/2;
+yc = (ymin+ymax)/2;
+zc = (zmin+zmax)/2;
+xs = xmax-xmin;
+ys = ymax-ymin;
+zs = zmax-zmin;
+
+addrect;
+set("name","SiO2_substrate");
+set("x",xc);
+set("x span",xs);
+set("y",yc);
+set("y span",ys);
+set("z",zmin-5*um);
+set("z span",10*um);
+set("material",substrate_material);
+
+fdtd_margin_x = 10*um;
+fdtd_margin_y = 10*um;
+fdtd_substrate_depth = 4*um;
+source_gap_above_tube = 8*um;
+source_top_gap = 4*um;
+
+fdtd_xmin = -0.5*pattern_W - fdtd_margin_x;
+fdtd_xmax = 0.5*pattern_W + fdtd_margin_x;
+fdtd_ymin = -outer_R - fdtd_margin_y;
+fdtd_ymax = outer_R + fdtd_margin_y;
+fdtd_zmin = substrate_top_z - fdtd_substrate_depth;
+source_z = outer_R + source_gap_above_tube;
+fdtd_zmax = source_z + source_top_gap;
+
+fdtd_xc = (fdtd_xmin+fdtd_xmax)/2;
+fdtd_yc = (fdtd_ymin+fdtd_ymax)/2;
+fdtd_zc = (fdtd_zmin+fdtd_zmax)/2;
+fdtd_xs = fdtd_xmax-fdtd_xmin;
+fdtd_ys = fdtd_ymax-fdtd_ymin;
+fdtd_zs = fdtd_zmax-fdtd_zmin;
+
+monitor_zmin = substrate_top_z - 3*um;
+monitor_zmax = source_z - 1*um;
+monitor_zc = (monitor_zmin+monitor_zmax)/2;
+monitor_zs = monitor_zmax-monitor_zmin;
+
+addfdtd;
+set("dimension",2);
+set("x",fdtd_xc);
+set("x span",fdtd_xs);
+set("y",fdtd_yc);
+set("y span",fdtd_ys);
+set("z",fdtd_zc);
+set("z span",fdtd_zs);
+set("mesh accuracy",3);
+set("x min bc","PML");
+set("x max bc","PML");
+set("y min bc","PML");
+set("y max bc","PML");
+set("z min bc","PML");
+set("z max bc","PML");
+
+# User spherical direction: longitude phi = 150 deg, latitude theta = 30 deg.
+# Target propagation unit vector toward the structure center:
+# kx = 0.75, ky = -0.5, kz = -0.433013.
+# The injection axis is selected from the largest |k| component to avoid grazing source injection.
+source_longitude_deg = 150;
+source_latitude_deg = 30;
+target_kx = 0.75;
+target_ky = -0.5;
+target_kz = -0.433013;
+fdtd_source_theta_deg = 41.409622;
+fdtd_source_phi_deg = -139.106605;
+
+addplane;
+set("name","src_lon150_latp30");
+set("plane wave type","BFAST");
+set("injection axis","x");
+set("direction","forward");
+set("angle theta",fdtd_source_theta_deg);
+set("angle phi",fdtd_source_phi_deg);
+set("polarization angle",90);
+set("x",fdtd_xmin + 0.5*source_top_gap);
+set("y",fdtd_yc);
+set("y span",fdtd_ys);
+set("z",fdtd_zc);
+set("z span",fdtd_zs);
+set("wavelength start",lambda0);
+set("wavelength stop",lambda0);
+
+addprofile; set("name","xy_lower_through_tube"); set("monitor type",7);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",substrate_top_z + 0.35*(outer_R-substrate_top_z));
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","xy_upper_through_tube"); set("monitor type",7);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",substrate_top_z + 0.75*(outer_R-substrate_top_z));
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","yz_center"); set("monitor type",5);
+set("x",0); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","yz_side"); set("monitor type",5);
+set("x",0.25*pattern_W); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","xz_center"); set("monitor type",6);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",0); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+# run;
