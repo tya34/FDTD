@@ -1,5 +1,5 @@
 ############################################################
-# Taper_lon180_latm30_FDTD.txt
+# Taper_FDTD.txt
 # Geometry-only symmetric folded taper model on SiO2 substrate.
 # Unrolled W/L = 150/150 um, VO2 thickness = 200 nm.
 #
@@ -246,28 +246,28 @@ set("y max bc","PML");
 set("z min bc","PML");
 set("z max bc","PML");
 
-# User spherical direction: longitude phi = 180 deg, latitude theta = -30 deg.
-# Target propagation unit vector toward the structure center:
-# kx = -0.866025, ky = 0.5, kz = 0.
-# Longitude and latitude label the source position; the propagation vector points back toward the center.
+# Source-position spherical coordinates: longitude phi = 180 deg, latitude theta = -30 deg.
+# Target propagation unit vector from the source position back toward the structure center:
+# kx = 0.866025, ky = -0.5, kz = 0.
+# Longitude and latitude label the source position; the propagation vector is the opposite radial direction.
 # The injection axis is selected from the largest |k| component to avoid grazing source injection.
 source_longitude_deg = 180;
 source_latitude_deg = -30;
-target_kx = -0.866025;
-target_ky = 0.5;
+target_kx = 0.866025;
+target_ky = -0.5;
 target_kz = 0;
 fdtd_source_theta_deg = 30;
-fdtd_source_phi_deg = 180;
+fdtd_source_phi_deg = -180;
 
 addplane;
 set("name","src_lon180_latm30");
 set("plane wave type","BFAST");
 set("injection axis","x");
-set("direction","backward");
+set("direction","forward");
 set("angle theta",fdtd_source_theta_deg);
 set("angle phi",fdtd_source_phi_deg);
 set("polarization angle",90);
-set("x",fdtd_xmax - 0.5*source_top_gap);
+set("x",fdtd_xmin + 0.5*source_top_gap);
 set("y",fdtd_yc);
 set("y span",fdtd_ys);
 set("z",fdtd_zc);

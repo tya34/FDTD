@@ -1,5 +1,5 @@
 ############################################################
-# Arch_lon090_latp30_FDTD.txt
+# Arch_FDTD.txt
 # Zhang 2024 self-rolled photodetector geometry.
 # W/L = 30/150 um, VO2 thickness = 200 nm.
 # Shape-controlled arch morphology:
@@ -165,18 +165,18 @@ set("y max bc","PML");
 set("z min bc","PML");
 set("z max bc","PML");
 
-# User spherical direction: longitude phi = 90 deg, latitude theta = 30 deg.
-# Target propagation unit vector toward the structure center:
-# kx = 0, ky = -0.5, kz = -0.866025.
-# Longitude and latitude label the source position; the propagation vector points back toward the center.
+# Source-position spherical coordinates: longitude phi = 90 deg, latitude theta = 30 deg.
+# Target propagation unit vector from the source position back toward the structure center:
+# kx = 0, ky = 0.5, kz = -0.866025.
+# Longitude and latitude label the source position; the propagation vector is the opposite radial direction.
 # The injection axis is selected from the largest |k| component to avoid grazing source injection.
 source_longitude_deg = 90;
 source_latitude_deg = 30;
 target_kx = 0;
-target_ky = -0.5;
+target_ky = 0.5;
 target_kz = -0.866025;
 fdtd_source_theta_deg = 30;
-fdtd_source_phi_deg = 90;
+fdtd_source_phi_deg = -90;
 
 addplane;
 set("name","src_lon090_latp30");
@@ -190,7 +190,7 @@ set("x",fdtd_xc);
 set("x span",fdtd_xs);
 set("y",fdtd_yc);
 set("y span",fdtd_ys);
-set("z",source_z);
+set("z",fdtd_zmax - 0.5*source_top_gap);
 set("wavelength start",lambda0);
 set("wavelength stop",lambda0);
 

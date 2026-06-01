@@ -1,5 +1,5 @@
 ############################################################
-# Tube_lon060_latm60_FDTD.txt
+# Tube_FDTD.txt
 # Direct ring primitive model used as a rolled tube.
 # W/L = 250/150 um, VO2 thickness = 200 nm, tube radius = 50 um.
 ############################################################
@@ -107,30 +107,30 @@ set("y max bc","PML");
 set("z min bc","PML");
 set("z max bc","PML");
 
-# User spherical direction: longitude phi = 60 deg, latitude theta = -60 deg.
-# Target propagation unit vector toward the structure center:
-# kx = 0.25, ky = 0.866025, kz = -0.433013.
-# Longitude and latitude label the source position; the propagation vector points back toward the center.
+# Source-position spherical coordinates: longitude phi = 60 deg, latitude theta = -60 deg.
+# Target propagation unit vector from the source position back toward the structure center:
+# kx = -0.25, ky = -0.866025, kz = -0.433013.
+# Longitude and latitude label the source position; the propagation vector is the opposite radial direction.
 # The injection axis is selected from the largest |k| component to avoid grazing source injection.
 source_longitude_deg = 60;
 source_latitude_deg = -60;
-target_kx = 0.25;
-target_ky = 0.866025;
+target_kx = -0.25;
+target_ky = -0.866025;
 target_kz = -0.433013;
 fdtd_source_theta_deg = 30;
-fdtd_source_phi_deg = 150;
+fdtd_source_phi_deg = 30;
 
 addplane;
 set("name","src_lon060_latm60");
 set("plane wave type","BFAST");
 set("injection axis","y");
-set("direction","forward");
+set("direction","backward");
 set("angle theta",fdtd_source_theta_deg);
 set("angle phi",fdtd_source_phi_deg);
 set("polarization angle",90);
 set("x",fdtd_xc);
 set("x span",fdtd_xs);
-set("y",fdtd_ymin + 0.5*source_top_gap);
+set("y",fdtd_ymax - 0.5*source_top_gap);
 set("z",fdtd_zc);
 set("z span",fdtd_zs);
 set("wavelength start",lambda0);
