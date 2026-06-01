@@ -18,24 +18,36 @@
 ## 经纬度入射角定义
 
 - 角度定义采用光源在半球表面上的位置。半球沿 `+z` 方向突出，半球圆底面位于 `xy` 平面；光从该位置射向结构中心。
-- 经度记为 `phi`，范围为 `0 deg` 到 `180 deg`；纬度记为 `theta`，范围为 `-90 deg` 到 `90 deg`。
-- 典型方向：
-  - `theta = 0 deg, phi = 0 deg`：光源位于 `+x` 侧，沿 `-x` 方向入射。
-  - `theta = 0 deg, phi = 90 deg`：光源位于 `+z` 侧，沿 `-z` 方向正入射。
-  - `theta = 0 deg, phi = 180 deg`：光源位于 `-x` 侧，沿 `+x` 方向入射。
-  - `theta = +90 deg`：光源位于 `-y` 侧，沿 `+y` 方向入射。
-  - `theta = -90 deg`：光源位于 `+y` 侧，沿 `-y` 方向入射。
-- 经度和纬度均表示光源所在的半球表面位置。FDTD 红色箭头表示的是光从该位置射向结构中心的传播方向，因此传播矢量与光源位置径向矢量相反。
-- 从用户经纬度换算到 FDTD 中红色箭头表示的传播方向单位矢量：
+- 为避免和 Lumerical/FDTD 的 `angle theta`、`angle phi` 混淆，用户经纬度在脚本中统一写为 `source_lon_deg` 和 `source_lat_deg`。
+- `source_lon_deg` 范围为 `0 deg` 到 `180 deg`；`source_lat_deg` 范围为 `-90 deg` 到 `90 deg`。
+- 当前采用的锚点：
+  - `source_lon_deg = 0 deg, source_lat_deg = +90 deg`：光源位于 `-x` 侧，沿 `+x` 方向入射。
+  - `source_lon_deg = 0 deg, source_lat_deg = -90 deg`：光源位于 `-y` 侧，沿 `+y` 方向入射。
+  - `source_lon_deg = 90 deg`：光源位于 `+z` 侧，沿 `-z` 方向正入射。
+- 用户纬度先换算为圆底面内的方位角：
 
 ```text
-kx = -cos(theta) * cos(phi)
-ky = sin(theta)
-kz = -cos(theta) * sin(phi)
+base_azimuth_deg = 225 deg - 0.5 * source_lat_deg
 ```
 
-- 批量角度脚本中，先根据上述公式计算 `target_kx`、`target_ky`、`target_kz`，再选择绝对值最大的分量作为 `injection axis`，以避免接近擦边的源注入。
-- Lumerical `angle theta` 是相对所选 `injection axis` 的夹角，`angle phi` 是绕所选 `injection axis` 的方位角；它们不是用户半球坐标里的 `theta`、`phi`。
+- 光源位置单位矢量为：
+
+```text
+src_pos_x = cos(source_lon_deg) * cos(base_azimuth_deg)
+src_pos_y = cos(source_lon_deg) * sin(base_azimuth_deg)
+src_pos_z = sin(source_lon_deg)
+```
+
+- FDTD 红色箭头表示的是光从光源位置射向结构中心的传播方向，因此传播方向单位矢量为：
+
+```text
+target_kx = -src_pos_x
+target_ky = -src_pos_y
+target_kz = -src_pos_z
+```
+
+- 批量角度脚本中，先根据上述公式计算 `src_pos_x`、`src_pos_y`、`src_pos_z` 和 `target_kx`、`target_ky`、`target_kz`，再选择绝对值最大的传播分量作为 `injection axis`，以避免接近擦边的源注入。
+- Lumerical `angle theta` 是相对所选 `injection axis` 的夹角，`angle phi` 是绕所选 `injection axis` 的方位角；它们只保存在 `fdtd_angle_theta_deg` 和 `fdtd_angle_phi_deg` 中，不作为用户经纬度变量使用。
 - 当前为 Ring、Tube、Arch、Helix、Taper 各生成了 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。生成脚本保存在对应结构文件夹内，结构参数保持不变，只改变平面波源设置。
 
 ## Ring
