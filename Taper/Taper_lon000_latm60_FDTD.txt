@@ -246,30 +246,35 @@ set("y max bc","PML");
 set("z min bc","PML");
 set("z max bc","PML");
 
-# Source-position spherical coordinates: longitude phi = 0 deg, latitude theta = -60 deg.
+# User source coordinates: source_lon_deg = 0 deg, source_lat_deg = -60 deg.
+# Source-position unit vector on the hemisphere:
+# src_pos_x = -0.258819, src_pos_y = -0.965926, src_pos_z = 0.
 # Target propagation unit vector from the source position back toward the structure center:
-# kx = -0.5, ky = -0.866025, kz = 0.
-# Longitude and latitude label the source position; the propagation vector is the opposite radial direction.
+# kx = 0.258819, ky = 0.965926, kz = 0.
+# User longitude/latitude are source-position coordinates; FDTD angle theta/phi below are Lumerical source angles.
 # The injection axis is selected from the largest |k| component to avoid grazing source injection.
-source_longitude_deg = 0;
-source_latitude_deg = -60;
-target_kx = -0.5;
-target_ky = -0.866025;
+source_lon_deg = 0;
+source_lat_deg = -60;
+src_pos_x = -0.258819;
+src_pos_y = -0.965926;
+src_pos_z = 0;
+target_kx = 0.258819;
+target_ky = 0.965926;
 target_kz = 0;
-fdtd_source_theta_deg = 30;
-fdtd_source_phi_deg = 90;
+fdtd_angle_theta_deg = 15;
+fdtd_angle_phi_deg = 90;
 
 addplane;
 set("name","src_lon000_latm60");
 set("plane wave type","BFAST");
 set("injection axis","y");
-set("direction","backward");
-set("angle theta",fdtd_source_theta_deg);
-set("angle phi",fdtd_source_phi_deg);
+set("direction","forward");
+set("angle theta",fdtd_angle_theta_deg);
+set("angle phi",fdtd_angle_phi_deg);
 set("polarization angle",90);
 set("x",fdtd_xc);
 set("x span",fdtd_xs);
-set("y",fdtd_ymax - 0.5*source_top_gap);
+set("y",fdtd_ymin + 0.5*source_top_gap);
 set("z",fdtd_zc);
 set("z span",fdtd_zs);
 set("wavelength start",lambda0);
