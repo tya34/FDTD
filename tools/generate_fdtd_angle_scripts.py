@@ -38,19 +38,28 @@ def select_source_settings(kx: float, ky: float, kz: float) -> tuple[str, str, f
         direction = "forward" if kz >= 0 else "backward"
         base = kz if direction == "forward" else -kz
         theta = math.degrees(math.acos(max(-1.0, min(1.0, base))))
-        phi = math.degrees(math.atan2(ky, kx))
+        if direction == "forward":
+            phi = math.degrees(math.atan2(ky, kx))
+        else:
+            phi = math.degrees(math.atan2(-ky, -kx))
     elif ay >= ax and ay >= az:
         axis = "y"
         direction = "forward" if ky >= 0 else "backward"
         base = ky if direction == "forward" else -ky
         theta = math.degrees(math.acos(max(-1.0, min(1.0, base))))
-        phi = math.degrees(math.atan2(kx, kz))
+        if direction == "forward":
+            phi = math.degrees(math.atan2(kx, kz))
+        else:
+            phi = math.degrees(math.atan2(-kx, -kz))
     else:
         axis = "x"
         direction = "forward" if kx >= 0 else "backward"
         base = kx if direction == "forward" else -kx
         theta = math.degrees(math.acos(max(-1.0, min(1.0, base))))
-        phi = math.degrees(math.atan2(kz, ky))
+        if direction == "forward":
+            phi = math.degrees(math.atan2(kz, ky))
+        else:
+            phi = math.degrees(math.atan2(-kz, -ky))
 
     if phi > 180:
         phi -= 360
@@ -91,6 +100,7 @@ def source_block(structure: str, lon: int, lat: int) -> str:
     return f"""# User spherical direction: longitude phi = {lon} deg, latitude theta = {lat} deg.
 # Target propagation unit vector toward the structure center:
 # kx = {fmt(kx)}, ky = {fmt(ky)}, kz = {fmt(kz)}.
+# Positive latitude means the source is on the +theta side; the propagation vector points back toward the center.
 # The injection axis is selected from the largest |k| component to avoid grazing source injection.
 source_longitude_deg = {lon};
 source_latitude_deg = {lat};
