@@ -2,7 +2,7 @@
 
 ## 目标
 
-复现 Zhang 等 2024 年文章中用于光电测试的非平面自卷曲结构。当前已完成并统一维护四类结构：Ring、Tube、Arch 和 Helix。
+复现 Zhang 等 2024 年文章中用于光电测试的非平面自卷曲结构。当前已完成并统一维护五类结构：Ring、Tube、Arch、Helix 和 Taper。
 
 ## 统一设置
 
@@ -20,7 +20,9 @@
 - 角度定义采用半球表面到结构中心的入射方向。半球沿 `+z` 方向突出，半球圆底面位于 `xy` 平面。
 - 经度记为 `phi`，范围为 `0 deg` 到 `180 deg`；纬度记为 `theta`，范围为 `-90 deg` 到 `90 deg`。
 - 典型方向：
+  - `theta = 0 deg, phi = 0 deg`：沿 `+x` 方向入射。
   - `theta = 0 deg, phi = 90 deg`：沿 `-z` 方向正入射。
+  - `theta = 0 deg, phi = 180 deg`：沿 `-x` 方向入射。
   - `theta = +90 deg`：沿 `-y` 方向入射。
   - `theta = -90 deg`：沿 `+y` 方向入射。
 - 正纬度表示光源位于 `+theta` 一侧；FDTD 红色箭头表示的是光从该位置射向结构中心的传播方向，因此传播矢量与光源位置径向矢量相反。
@@ -34,7 +36,7 @@ kz = -cos(theta) * sin(phi)
 
 - 批量角度脚本中，先根据上述公式计算 `target_kx`、`target_ky`、`target_kz`，再选择绝对值最大的分量作为 `injection axis`，以避免接近擦边的源注入。
 - Lumerical `angle theta` 是相对所选 `injection axis` 的夹角，`angle phi` 是绕所选 `injection axis` 的方位角；它们不是用户半球坐标里的 `theta`、`phi`。
-- 当前为 Ring、Tube、Arch、Helix 各生成了 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。生成脚本保存在对应结构文件夹内，结构参数保持不变，只改变平面波源设置。
+- 当前为 Ring、Tube、Arch、Helix、Taper 各生成了 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。生成脚本保存在对应结构文件夹内，结构参数保持不变，只改变平面波源设置。
 
 ## Ring
 
@@ -87,8 +89,20 @@ kz = -cos(theta) * sin(phi)
 - 已加入紧凑 FDTD 区域、`-z` 入射光源和 profile monitors。
 - XY monitors：`xy_lower_through_helix` 和 `xy_upper_through_helix`，均穿过 helix 结构。
 
+## Taper
+
+- 文件：`Taper_FDTD.txt`
+- 结构：使用 `addplanarsolid` 手写等厚双侧斜折/卷曲曲面，并保留 SiO2 衬底。
+- 已加入紧凑 FDTD 区域、`-z` 入射光源和 profile monitors。
+- 卷曲前尺寸：`pattern_W = 150 um`，`pattern_L = 150 um`。
+- 固定边：`y = 0` 的整条边固定在 SiO2 衬底上，衬底顶面为 `z = 0`。
+- 折痕位置：两条对称斜折痕分别从 `(-pattern_W/2, 0)` 和 `(pattern_W/2, 0)` 连到 `(0, pattern_L)`。
+- 左右上角三角区域在有限宽度 `curl_width` 的平滑折痕区内向中线卷起，最终在中线附近形成一对靠近的三角卷曲片。
+- 关键可调参数：`curl_width`、`side_closure`、`center_lift_slope`、`fold_extra_lift`、`tip_extra_lift`、`transition_round_lift`。
+- XY monitors：`xy_lower_through_taper` 和 `xy_upper_through_taper`，均穿过 taper 结构。
+
 ## 当前状态
 
-- `Ring_FDTD.txt`、`Tube_FDTD.txt`、`Arch_FDTD.txt` 和 `Helix_FDTD.txt` 均包含结构、衬底、紧凑 FDTD 区域、`-z` 入射光源和 profile monitors。
-- 四个模型的 XY monitors 已统一为上下两个穿过结构的截面。
-- Taper 结构尚未建模。
+- `Ring_FDTD.txt`、`Tube_FDTD.txt`、`Arch_FDTD.txt`、`Helix_FDTD.txt` 和 `Taper_FDTD.txt` 均包含结构、衬底、紧凑 FDTD 区域、`-z` 入射光源和 profile monitors。
+- 五个模型的 XY monitors 已统一为上下两个穿过结构的截面。
+- 已为 Ring、Tube、Arch、Helix、Taper 各生成 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
