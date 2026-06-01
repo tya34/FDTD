@@ -230,8 +230,8 @@ set("z min bc","PML");
 set("z max bc","PML");
 
 # User source coordinates: source_lon_deg = 180 deg, source_lat_deg = 30 deg.
-# Source-position unit vector on the hemisphere:
-# src_pos_x = 0.866025, src_pos_y = 0.5, src_pos_z = 0.
+# Earth-like source hemisphere: longitude runs from -x through +z to +x; latitude runs from -y to +y.
+# Source-position unit vector: src_pos_x = 0.866025, src_pos_y = 0.5, src_pos_z = 0.
 # Target propagation unit vector from the source position back toward the structure center:
 # kx = -0.866025, ky = -0.5, kz = 0.
 # User longitude/latitude are source-position coordinates; FDTD angle theta/phi below are Lumerical source angles.
