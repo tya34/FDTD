@@ -109,16 +109,16 @@ set("z max bc","PML");
 
 # User spherical direction: longitude phi = 120 deg, latitude theta = 60 deg.
 # Target propagation unit vector toward the structure center:
-# kx = 0.25, ky = -0.866025, kz = -0.433013.
-# Positive latitude means the source is on the +theta side; the propagation vector points back toward the center.
+# kx = -0.25, ky = -0.866025, kz = -0.433013.
+# Longitude and latitude label the source position; the propagation vector points back toward the center.
 # The injection axis is selected from the largest |k| component to avoid grazing source injection.
 source_longitude_deg = 120;
 source_latitude_deg = 60;
-target_kx = 0.25;
+target_kx = -0.25;
 target_ky = -0.866025;
 target_kz = -0.433013;
 fdtd_source_theta_deg = 30;
-fdtd_source_phi_deg = -30;
+fdtd_source_phi_deg = 30;
 
 addplane;
 set("name","src_lon120_latp60");
