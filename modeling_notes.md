@@ -18,24 +18,21 @@
 ## 经纬度入射角定义
 
 - 角度定义采用光源在半球表面上的位置。半球沿 `+z` 方向突出，半球圆底面位于 `xy` 平面；光从该位置射向结构中心。
+- 可按地球经纬度理解这个半球：`source_lat_deg = 0 deg` 是赤道，赤道位于 `xz` 平面内；`source_lon_deg` 沿赤道从 `-x` 侧出发，经过 `+z` 顶点投影方向，到达 `+x` 侧。纬度方向沿 `y` 轴变化，负纬度在 `-y` 侧，正纬度在 `+y` 侧。
 - 为避免和 Lumerical/FDTD 的 `angle theta`、`angle phi` 混淆，用户经纬度在脚本中统一写为 `source_lon_deg` 和 `source_lat_deg`。
 - `source_lon_deg` 范围为 `0 deg` 到 `180 deg`；`source_lat_deg` 范围为 `-90 deg` 到 `90 deg`。
 - 当前采用的锚点：
-  - `source_lon_deg = 0 deg, source_lat_deg = +90 deg`：光源位于 `-x` 侧，沿 `+x` 方向入射。
-  - `source_lon_deg = 0 deg, source_lat_deg = -90 deg`：光源位于 `-y` 侧，沿 `+y` 方向入射。
-  - `source_lon_deg = 90 deg`：光源位于 `+z` 侧，沿 `-z` 方向正入射。
-- 用户纬度先换算为圆底面内的方位角：
+  - `source_lon_deg = 0 deg, source_lat_deg = 0 deg`：光源位于 `-x` 侧，沿 `+x` 方向入射。
+  - `source_lon_deg = 90 deg, source_lat_deg = 0 deg`：光源位于 `+z` 侧，沿 `-z` 方向正入射。
+  - `source_lon_deg = 180 deg, source_lat_deg = 0 deg`：光源位于 `+x` 侧，沿 `-x` 方向入射。
+  - `source_lat_deg = -90 deg`：光源位于 `-y` 侧，沿 `+y` 方向入射。
+  - `source_lat_deg = +90 deg`：光源位于 `+y` 侧，沿 `-y` 方向入射。
+- 按上述地球半球定义，光源位置单位矢量为：
 
 ```text
-base_azimuth_deg = 225 deg - 0.5 * source_lat_deg
-```
-
-- 光源位置单位矢量为：
-
-```text
-src_pos_x = cos(source_lon_deg) * cos(base_azimuth_deg)
-src_pos_y = cos(source_lon_deg) * sin(base_azimuth_deg)
-src_pos_z = sin(source_lon_deg)
+src_pos_x = -cos(source_lat_deg) * cos(source_lon_deg)
+src_pos_y =  sin(source_lat_deg)
+src_pos_z =  cos(source_lat_deg) * sin(source_lon_deg)
 ```
 
 - FDTD 红色箭头表示的是光从光源位置射向结构中心的传播方向，因此传播方向单位矢量为：
