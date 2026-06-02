@@ -2,7 +2,7 @@
 # 1V_FDTD.txt
 # Partial ring primitive model.
 # Unrolled W/L = 30/300 um, VO2 thickness = 200 nm,
-# curled radius ~= 120 um, arc angle = L/R ~= 143.24 deg.
+# curled diameter ~= 110 um, arc angle = L/R ~= 312.52 deg.
 ############################################################
 
 deleteall;
@@ -19,7 +19,8 @@ lambda0 = 5*um;
 pattern_W = 30*um;
 pattern_L = 300*um;
 film_t = 200*nm;
-ring_R = 120*um;
+ring_D = 110*um;
+ring_R = 0.5*ring_D;
 
 arc_angle_deg = pattern_L/ring_R*180/pi_val;
 theta_start = 0;
@@ -30,10 +31,10 @@ outer_R = ring_R + 0.5*film_t;
 substrate_top_z = -outer_R;
 
 addstructuregroup;
-set("name","1V_W30_L300_R120_group");
+set("name","1V_W30_L300_D110_group");
 
 addring;
-set("name","1V_W30_L300_R120_VO2");
+set("name","1V_W30_L300_D110_VO2");
 set("material",film_material);
 set("x",0);
 set("y",0);
@@ -45,7 +46,7 @@ set("theta start",theta_start);
 set("theta stop",theta_stop);
 set("first axis","y");
 set("rotation 1",90);
-addtogroup("1V_W30_L300_R120_group");
+addtogroup("1V_W30_L300_D110_group");
 
 xmin = -0.75*pattern_W;
 xmax = 0.75*pattern_W;
