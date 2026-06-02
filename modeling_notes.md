@@ -107,8 +107,8 @@ target_kz = -src_pos_z
 - 文件：`1V_FDTD.txt`
 - 结构：模仿 Ring，使用 Lumerical 内置 `addring` primitive 建立不到一圈的开口圆弧。
 - 卷曲前尺寸：`pattern_W = 30 um`，`pattern_L = 300 um`。
-- 中心半径：`ring_R = 120 um`。
-- 圆弧角：由 `arc_angle_deg = pattern_L/ring_R*180/pi_val` 自动计算，当前为约 `143.239449 deg`。
+- 卷曲后直径：`ring_D = 110 um`，对应中心半径 `ring_R = 55 um`。
+- 圆弧角：由 `arc_angle_deg = pattern_L/ring_R*180/pi_val` 自动计算，当前为约 `312.522434 deg`，接近一圈。
 - 薄膜厚度：200 nm，通过 `inner_R = ring_R - film_t/2` 和 `outer_R = ring_R + film_t/2` 设置。
 - 轴向宽度：通过 `z span = pattern_W` 设置。
 - 衬底顶面：`substrate_top_z = -outer_R`，使圆弧最低点接触衬底。
@@ -118,4 +118,4 @@ target_kz = -src_pos_z
 
 - `Ring_FDTD.txt`、`Tube_FDTD.txt`、`Arch_FDTD.txt`、`Helix_FDTD.txt`、`Taper_FDTD.txt` 和 `1V_FDTD.txt` 均包含结构、衬底、紧凑 FDTD 区域、默认 `-z` 入射光源和 profile monitors。
 - Ring、Tube、Arch、Helix、Taper 已各生成 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
-- `1V_FDTD.txt` 当前为基础正入射脚本，后续如需全角度扫描，可按 Ring 的批量角度生成逻辑展开到单独的 `1V/` 文件夹。
+- `1V_FDTD.txt` 当前为基础正入射脚本；`1V/` 文件夹已按 Ring 的批量角度生成逻辑展开 `35` 个角度脚本，经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
