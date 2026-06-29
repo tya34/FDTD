@@ -1,7 +1,7 @@
 ############################################################
 # Tube_FDTD.txt
 # Direct ring primitive model used as a rolled tube.
-# W/L = 250/150 um, VO2 thickness = 200 nm, tube radius = 50 um.
+# W/L = 250/150 um, VO2 thickness = 500 nm, tube radius = 50 um.
 ############################################################
 
 deleteall;
@@ -15,7 +15,7 @@ substrate_material = "SiO2 (Glass) - Palik";
 lambda0 = 5*um;
 
 pattern_W = 250*um;
-film_t = 200*nm;
+film_t = 500*nm;
 tube_R = 50*um;
 theta_start = 0;
 theta_stop = 360;

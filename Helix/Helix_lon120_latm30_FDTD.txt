@@ -1,7 +1,7 @@
 ############################################################
 # Helix_FDTD.txt
 # Geometry-only oblique folded helix-like ribbon model.
-# Unrolled W/L = 50/150 um, VO2 thickness = 200 nm.
+# Unrolled W/L = 50/150 um, VO2 thickness = 500 nm.
 #
 # The model approximates a rectangle folded along a 45 deg line.
 # One side remains close to the original flat rectangle, while the
@@ -22,7 +22,7 @@ lambda0 = 5*um;
 
 pattern_W = 50*um;
 pattern_L = 150*um;
-film_t = 200*nm;
+film_t = 500*nm;
 substrate_top_z = 0;
 
 Nx = 90;

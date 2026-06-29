@@ -7,7 +7,7 @@
 ## 统一设置
 
 - 材料：VO2 薄膜，SiO2 衬底。
-- VO2 薄膜厚度：200 nm。
+- VO2 薄膜厚度：500 nm。
 - 光源：默认使用沿 `-z` 方向入射的 BFAST 平面波，`polarization angle = 90 deg`。
 - FDTD：紧凑区域，`mesh accuracy = 3`，各边界使用 PML。
 - XY monitor：统一为两个穿过结构的水平截面：
@@ -77,7 +77,7 @@ target_kz = -src_pos_z
 - 高度：沿 L 方向逐渐升高，任意固定 L 截面沿 W 方向为抛物线，中间低、两侧高。
 - `L = 150 um` 端部：中心最低点约 `z = 10 um`，两侧最高点约 `z = 20 um`。
 - 中心曲面：`z = (y/pattern_L) * (10 um + 10 um*(x/(pattern_W/2))^2)`。
-- 通过曲面法向正负偏移形成 200 nm 等厚实体，并整体平移使薄膜最低点接触衬底顶面。
+- 通过曲面法向正负偏移形成 500 nm 等厚实体，并整体平移使薄膜最低点接触衬底顶面。
 - XY monitors：`xy_lower_through_arch` 和 `xy_upper_through_arch`。
 
 ## Helix
@@ -109,7 +109,7 @@ target_kz = -src_pos_z
 - 卷曲前尺寸：`pattern_W = 30 um`，`pattern_L = 300 um`。
 - 卷曲后直径：`ring_D = 110 um`，对应中心半径 `ring_R = 55 um`。
 - 圆弧角：由 `arc_angle_deg = pattern_L/ring_R*180/pi_val` 自动计算，当前为约 `312.522434 deg`，接近一圈。
-- 薄膜厚度：200 nm，通过 `inner_R = ring_R - film_t/2` 和 `outer_R = ring_R + film_t/2` 设置。
+- 薄膜厚度：500 nm，通过 `inner_R = ring_R - film_t/2` 和 `outer_R = ring_R + film_t/2` 设置。
 - 轴向宽度：通过 `z span = pattern_W` 设置。
 - 衬底顶面：`substrate_top_z = -outer_R`，使圆弧最低点接触衬底。
 - XY monitors：`xy_lower_through_1V` 和 `xy_upper_through_1V`。

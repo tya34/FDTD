@@ -1,7 +1,7 @@
 ############################################################
 # 1V_FDTD.txt
 # Partial ring primitive model.
-# Unrolled W/L = 30/300 um, VO2 thickness = 200 nm,
+# Unrolled W/L = 30/300 um, VO2 thickness = 500 nm,
 # curled diameter ~= 110 um, arc angle = L/R ~= 312.52 deg.
 ############################################################
 
@@ -18,7 +18,7 @@ lambda0 = 5*um;
 
 pattern_W = 30*um;
 pattern_L = 300*um;
-film_t = 200*nm;
+film_t = 500*nm;
 ring_D = 110*um;
 ring_R = 0.5*ring_D;
 

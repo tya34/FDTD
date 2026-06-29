@@ -1,7 +1,7 @@
 ############################################################
 # Arch_FDTD.txt
 # Zhang 2024 self-rolled photodetector geometry.
-# W/L = 30/150 um, VO2 thickness = 200 nm.
+# W/L = 30/150 um, VO2 thickness = 500 nm.
 # Shape-controlled arch morphology:
 # one L=0 edge fixed on the substrate, with a linearly increasing
 # lift along L and a parabolic cross-section across W.
@@ -19,7 +19,7 @@ lambda0 = 5*um;
 
 pattern_W = 30*um;
 pattern_L = 150*um;
-film_t = 200*nm;
+film_t = 500*nm;
 substrate_top_z = 0;
 
 Nx = 80;

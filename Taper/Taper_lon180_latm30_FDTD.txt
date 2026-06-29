@@ -1,7 +1,7 @@
 ############################################################
 # Taper_FDTD.txt
 # Geometry-only symmetric folded taper model on SiO2 substrate.
-# Unrolled W/L = 150/150 um, VO2 thickness = 200 nm.
+# Unrolled W/L = 150/150 um, VO2 thickness = 500 nm.
 #
 # The unrolled film is a square. The y=0 edge remains fixed to
 # the substrate. Two oblique crease/curl bands run from the fixed
@@ -21,7 +21,7 @@ lambda0 = 5*um;
 
 pattern_W = 150*um;
 pattern_L = 150*um;
-film_t = 200*nm;
+film_t = 500*nm;
 substrate_top_z = 0;
 
 Nx = 180;
