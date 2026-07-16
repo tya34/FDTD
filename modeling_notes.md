@@ -9,7 +9,7 @@
 - 材料：VO2 薄膜，SiO2 衬底。
 - VO2 薄膜厚度：500 nm。
 - 光源：默认使用沿 `-z` 方向入射的 BFAST 平面波，`polarization angle = 90 deg`。
-- FDTD：紧凑区域，`mesh accuracy = 3`，各边界使用 PML。
+- FDTD：紧凑区域，`mesh accuracy = 1`，各边界使用 PML。
 - XY monitor：统一为两个穿过结构的水平截面：
   - `xy_lower_through_*`
   - `xy_upper_through_*`

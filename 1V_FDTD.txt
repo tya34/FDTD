@@ -105,7 +105,7 @@ set("y",fdtd_yc);
 set("y span",fdtd_ys);
 set("z",fdtd_zc);
 set("z span",fdtd_zs);
-set("mesh accuracy",3);
+set("mesh accuracy",1);
 set("x min bc","PML");
 set("x max bc","PML");
 set("y min bc","PML");
