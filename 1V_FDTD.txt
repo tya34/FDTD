@@ -129,11 +129,11 @@ set("z",source_z);
 set("wavelength start",lambda0);
 set("wavelength stop",lambda0);
 
-addprofile; set("name","xy_lower_through_1V"); set("monitor type",7);
+addprofile; set("name","xy_lower"); set("monitor type",7);
 set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",substrate_top_z + 0.35*(outer_R-substrate_top_z));
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
-addprofile; set("name","xy_upper_through_1V"); set("monitor type",7);
+addprofile; set("name","xy_upper"); set("monitor type",7);
 set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",substrate_top_z + 0.75*(outer_R-substrate_top_z));
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 

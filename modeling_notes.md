@@ -55,7 +55,7 @@ target_kz = -src_pos_z
 - 薄膜厚度：通过 `inner_R = ring_R - film_t/2` 和 `outer_R = ring_R + film_t/2` 设置。
 - 轴向宽度：通过 `z span = pattern_W` 设置。
 - 衬底顶面：`substrate_top_z = -outer_R`，使圆环最低点接触衬底。
-- XY monitors：`xy_lower_through_ring` 和 `xy_upper_through_ring`。
+- XY monitors：`xy_lower` 和 `xy_upper`。
 
 ## Tube
 
@@ -66,7 +66,7 @@ target_kz = -src_pos_z
 - 薄膜厚度：通过 `inner_R = tube_R - film_t/2` 和 `outer_R = tube_R + film_t/2` 设置。
 - 轴向宽度：通过 `z span = pattern_W` 设置。
 - 衬底顶面：`substrate_top_z = -outer_R`。
-- XY monitors：`xy_lower_through_tube` 和 `xy_upper_through_tube`。
+- XY monitors：`xy_lower` 和 `xy_upper`。
 
 ## Arch
 
@@ -78,7 +78,7 @@ target_kz = -src_pos_z
 - `L = 150 um` 端部：中心最低点约 `z = 10 um`，两侧最高点约 `z = 20 um`。
 - 中心曲面：`z = (y/pattern_L) * (10 um + 10 um*(x/(pattern_W/2))^2)`。
 - 通过曲面法向正负偏移形成 500 nm 等厚实体，并整体平移使薄膜最低点接触衬底顶面。
-- XY monitors：`xy_lower_through_arch` 和 `xy_upper_through_arch`。
+- XY monitors：`xy_lower` 和 `xy_upper`。
 
 ## Helix
 
@@ -89,7 +89,7 @@ target_kz = -src_pos_z
 - 折痕位置：近似为 `y = x + fold_c`，其中 `fold_c = pattern_L - half_W - edge_overhang`。
 - 折痕区：使用有限宽度 `curl_width` 的平滑过渡。
 - 关键可调参数：`curl_width`、`pre_lift_slope`、`fold_extra_lift`、`fold_start_tangent`、`fold_end_tangent`、`post_lift_slope`。
-- XY monitors：`xy_lower_through_helix` 和 `xy_upper_through_helix`。
+- XY monitors：`xy_lower` 和 `xy_upper`。
 
 ## Taper
 
@@ -100,7 +100,7 @@ target_kz = -src_pos_z
 - 折痕位置：两条对称斜折痕分别从 `(-pattern_W/2, 0)` 和 `(pattern_W/2, 0)` 连到 `(0, pattern_L)`。
 - 左右上角三角区域在有限宽度 `curl_width` 的平滑折痕区内向中线卷起，最终在中线附近形成一对靠近的三角卷曲片。
 - 关键可调参数：`curl_width`、`side_closure`、`center_lift_slope`、`fold_extra_lift`、`tip_extra_lift`、`transition_round_lift`。
-- XY monitors：`xy_lower_through_taper` 和 `xy_upper_through_taper`。
+- XY monitors：`xy_lower` 和 `xy_upper`。
 
 ## 1V
 
@@ -112,7 +112,7 @@ target_kz = -src_pos_z
 - 薄膜厚度：500 nm，通过 `inner_R = ring_R - film_t/2` 和 `outer_R = ring_R + film_t/2` 设置。
 - 轴向宽度：通过 `z span = pattern_W` 设置。
 - 衬底顶面：`substrate_top_z = -outer_R`，使圆弧最低点接触衬底。
-- XY monitors：`xy_lower_through_1V` 和 `xy_upper_through_1V`。
+- XY monitors：`xy_lower` 和 `xy_upper`。
 
 ## 当前状态
 

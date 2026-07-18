@@ -280,11 +280,11 @@ set("z",fdtd_zmax - 0.5*source_top_gap);
 set("wavelength start",lambda0);
 set("wavelength stop",lambda0);
 
-addprofile; set("name","xy_lower_through_taper"); set("monitor type",7);
+addprofile; set("name","xy_lower"); set("monitor type",7);
 set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",film_min_z + 0.35*(film_max_z-film_min_z));
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
-addprofile; set("name","xy_upper_through_taper"); set("monitor type",7);
+addprofile; set("name","xy_upper"); set("monitor type",7);
 set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",film_min_z + 0.75*(film_max_z-film_min_z));
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
