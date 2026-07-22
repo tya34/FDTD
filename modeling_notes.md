@@ -114,8 +114,18 @@ target_kz = -src_pos_z
 - 衬底顶面：`substrate_top_z = -outer_R`，使圆弧最低点接触衬底。
 - XY monitors：`xy_lower` 和 `xy_upper`。
 
+## 2V
+
+- 文件：`2V_FDTD.txt`
+- 结构：综合 Ring/Tube 的圆弧参数化和 Arch/Helix/Taper 的 `addplanarsolid` 等厚曲面方法，建立带连续侧向偏移的开口卷曲薄膜。
+- 卷曲前尺寸：`pattern_W = 30 um`，`pattern_L = 300 um`；VO2 厚度为 `500 nm`。
+- 卷曲后直径：默认 `ring_D = 140 um`，对应圆弧角约 `245.55 deg`、开口约 `114.45 deg`，明显大于 1V 的约 `47.48 deg` 开口。
+- 左倾方式：使用 `x = x0-z0*tan(axis_tilt_deg)` 让各卷曲截面随高度连续向宽度方向的 `-x` 侧移动，默认 `axis_tilt_deg = 10 deg`；固定短边仍完整贴合衬底，自由端在正视图中明确向左偏移。
+- `ring_D` 与 `axis_tilt_deg` 均集中在脚本开头，便于根据显微图继续标定。
+- `2V/` 文件夹按统一经纬度规则包含 `35` 个角度脚本。
+
 ## 当前状态
 
-- `Ring_FDTD.txt`、`Tube_FDTD.txt`、`Arch_FDTD.txt`、`Helix_FDTD.txt`、`Taper_FDTD.txt` 和 `1V_FDTD.txt` 均包含结构、衬底、紧凑 FDTD 区域、默认 `-z` 入射光源和 profile monitors。
-- Ring、Tube、Arch、Helix、Taper 已各生成 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
+- `Ring_FDTD.txt`、`Tube_FDTD.txt`、`Arch_FDTD.txt`、`Helix_FDTD.txt`、`Taper_FDTD.txt`、`1V_FDTD.txt` 和 `2V_FDTD.txt` 均包含结构、衬底、紧凑 FDTD 区域、默认 `-z` 入射光源和 profile monitors。
+- Ring、Tube、Arch、Helix、Taper 和 2V 已各生成 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
 - `1V_FDTD.txt` 当前为基础正入射脚本；`1V/` 文件夹已按 Ring 的批量角度生成逻辑展开 `35` 个角度脚本，经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
