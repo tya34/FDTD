@@ -1,0 +1,16 @@
+E = getresult("xy_lower_through_helix","E");
+
+x = E.x*1e6;
+y = E.y*1e6;
+
+Ex = pinch(E.Ex);
+Ey = pinch(E.Ey);
+Ez = pinch(E.Ez);
+
+Emag = sqrt(abs(Ex)^2 + abs(Ey)^2 + abs(Ez)^2);
+Emag = pinch(Emag);
+
+image(x, y, Emag, "x (um)", "y (um)", "|E| xy_lower_through_helix");
+
+setplot("colorbar min",0);
+setplot("colorbar max",3);
