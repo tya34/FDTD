@@ -1,5 +1,5 @@
 ############################################################
-# 2V_lon060_latp00_FDTD.txt
+# 2V_FDTD.txt
 # Zhang 2024 self-rolled 2V morphology.
 # Unrolled W/L = 30/300 um, VO2 thickness = 500 nm.
 #
@@ -223,37 +223,19 @@ set("y max bc","PML");
 set("z min bc","PML");
 set("z max bc","PML");
 
-# User source coordinates: source_lon_deg = 60 deg, source_lat_deg = 0 deg.
-# Earth-like source hemisphere: longitude runs from -x through +z to +x; latitude runs from -y to +y.
-# Source-position unit vector: src_pos_x = -0.5, src_pos_y = 0, src_pos_z = 0.866025.
-# Target propagation unit vector from the source position back toward the structure center:
-# kx = 0.5, ky = 0, kz = -0.866025.
-# User longitude/latitude are source-position coordinates; FDTD angle theta/phi below are Lumerical source angles.
-# The injection axis is selected from the largest |k| component to avoid grazing source injection.
-source_lon_deg = 60;
-source_lat_deg = 0;
-src_pos_x = -0.5;
-src_pos_y = 0;
-src_pos_z = 0.866025;
-target_kx = 0.5;
-target_ky = 0;
-target_kz = -0.866025;
-fdtd_angle_theta_deg = 30;
-fdtd_angle_phi_deg = 180;
-
 addplane;
-set("name","src_lon060_latp00");
+set("name","src_z_down");
 set("plane wave type","Bloch/Periodic");
 set("injection axis","z");
 set("direction","backward");
-set("angle theta",fdtd_angle_theta_deg);
-set("angle phi",fdtd_angle_phi_deg);
+set("angle theta",0);
+set("angle phi",0);
 set("polarization angle",90);
 set("x",fdtd_xc);
 set("x span",fdtd_xs);
 set("y",fdtd_yc);
 set("y span",fdtd_ys);
-set("z",fdtd_zmax - 0.5*source_top_gap);
+set("z",source_z);
 set("wavelength start",lambda0);
 set("wavelength stop",lambda0);
 

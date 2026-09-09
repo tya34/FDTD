@@ -1,6 +1,6 @@
-E = getresult("xy_lower_through_helix","E");
+E = getresult("field_yz_center","E");
 
-x = E.x*1e6;
+z = E.z*1e6;
 y = E.y*1e6;
 
 Ex = pinch(E.Ex);
@@ -10,7 +10,7 @@ Ez = pinch(E.Ez);
 Emag = sqrt(abs(Ex)^2 + abs(Ey)^2 + abs(Ez)^2);
 Emag = pinch(Emag);
 
-image(x, y, Emag, "x (um)", "y (um)", "|E| xy_lower_through_helix");
+image(y, z, Emag, "y (um)", "z (um)", "|E| field_yz_center");
 
 setplot("colorbar min",0);
 setplot("colorbar max",3);

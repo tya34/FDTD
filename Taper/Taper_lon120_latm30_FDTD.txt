@@ -266,7 +266,7 @@ fdtd_angle_phi_deg = -49.106605;
 
 addplane;
 set("name","src_lon120_latm30");
-set("plane wave type","BFAST");
+set("plane wave type","Bloch/Periodic");
 set("injection axis","z");
 set("direction","backward");
 set("angle theta",fdtd_angle_theta_deg);
@@ -280,23 +280,23 @@ set("z",fdtd_zmax - 0.5*source_top_gap);
 set("wavelength start",lambda0);
 set("wavelength stop",lambda0);
 
-addprofile; set("name","xy_lower"); set("monitor type",7);
+addprofile; set("name","field_xy_lower"); set("monitor type",7);
 set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",film_min_z + 0.35*(film_max_z-film_min_z));
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
-addprofile; set("name","xy_upper"); set("monitor type",7);
+addprofile; set("name","field_xy_upper"); set("monitor type",7);
 set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",film_min_z + 0.75*(film_max_z-film_min_z));
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
-addprofile; set("name","yz_center"); set("monitor type",5);
+addprofile; set("name","field_yz_center"); set("monitor type",5);
 set("x",fdtd_xc); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
-addprofile; set("name","yz_side"); set("monitor type",5);
+addprofile; set("name","field_yz_side"); set("monitor type",5);
 set("x",fdtd_xc + 0.25*(film_max_x-film_min_x)); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
-addprofile; set("name","xz_center"); set("monitor type",6);
+addprofile; set("name","field_xz_reference"); set("monitor type",6);
 set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("z",monitor_zc); set("z span",monitor_zs);
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
