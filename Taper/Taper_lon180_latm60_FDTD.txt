@@ -1,12 +1,10 @@
 ############################################################
-# Taper_FDTD.txt
-# Geometry-only symmetric folded taper model on SiO2 substrate.
-# Unrolled W/L = 150/150 um, VO2 thickness = 500 nm.
-#
-# The unrolled film is a square. The y=0 edge remains fixed to
-# the substrate. Two oblique crease/curl bands run from the fixed
-# corners to the free-edge center, lifting the two upper corner
-# triangular flaps inward until they sit close to each other.
+# Taper_lon180_latm60_FDTD.txt
+# Full-angle FDTD model using the SEM-calibrated curled membrane.
+# Unrolled length/width = 200/250 um; VO2 thickness = 500 nm.
+# The fixed y=0 edge remains on SiO2. Height rises continuously
+# from both long edges toward the center ridge, and the two free
+# corners meet at the common highest apex without curling past it.
 ############################################################
 
 deleteall;
@@ -14,151 +12,292 @@ clear;
 
 um = 1e-6;
 nm = 1e-9;
+pi_val = 3.141592653589793;
 
 film_material = "VO2 20";
 substrate_material = "SiO2 (Glass) - Palik";
+
+# Monochromatic source wavelength used by every angle script.
 lambda0 = 5*um;
 
-pattern_W = 150*um;
-pattern_L = 150*um;
+# Unrolled membrane dimensions.
+pattern_L = 200*um;
+pattern_W = 250*um;
 film_t = 500*nm;
+half_W = 0.5*pattern_W;
 substrate_top_z = 0;
 
+# Shape controls.
+apex_height = 105*um;
+apex_y = 45*um;
+free_center_height = 105*um;
+free_center_y = 65*um;
+center_ridge_lift = 18*um;
+center_forward_bulge = 75*um;
+edge_forward_bulge = 60*um;
+free_lobe_half_width = 2.5*um;
+curl_growth_power = 1.25;
+free_y_power = 1.25;
+free_z_power = 1.10;
+
+# Surface resolution.
 Nx = 180;
 Ny = 180;
 Nxv = Nx+1;
 Nyv = Ny+1;
 Nsurf = Nxv*Nyv;
-half_W = pattern_W/2;
-
-curl_width = 16*um;
-side_closure = 0.30;
-center_lift_slope = 0.035;
-fold_extra_lift = 28*um;
-tip_extra_lift = 7*um;
-transition_round_lift = 5*um;
-
-diag_len = sqrt(half_W^2 + pattern_L^2);
-
-left_ax = -half_W;
-left_ay = 0;
-left_ex = half_W/diag_len;
-left_ey = pattern_L/diag_len;
-left_nx = -left_ey;
-left_ny = left_ex;
-
-right_ax = half_W;
-right_ay = 0;
-right_ex = -half_W/diag_len;
-right_ey = pattern_L/diag_len;
-right_nx = right_ey;
-right_ny = -right_ex;
 
 addstructuregroup;
-set("name","Taper_W150_L150_group");
+set("name","Taper_W250_L200_geometry");
 
+# Mid-surface coordinates. flat_x and flat_y are material coordinates
+# on the unrolled 250 um x 200 um rectangular membrane.
 px = matrix(Nsurf,1);
 py = matrix(Nsurf,1);
 pz = matrix(Nsurf,1);
 
 for(ix=1:Nxv){
     flat_x = -half_W + (ix-1)/Nx*pattern_W;
+
     for(iy=1:Nyv){
         flat_y = (iy-1)/Ny*pattern_L;
         y_frac = flat_y/pattern_L;
 
-        left_vx = flat_x - left_ax;
-        left_vy = flat_y - left_ay;
-        left_u = left_vx*left_ex + left_vy*left_ey;
-        left_d = left_vx*left_nx + left_vy*left_ny;
-        left_q = (left_d + 0.5*curl_width)/curl_width;
-        if(left_q < 0){ left_t = 0; } else {
-            if(left_q > 1){ left_t = 1; } else {
-                left_t = left_q^2*(3-2*left_q);
-            }
-        }
-
-        right_vx = flat_x - right_ax;
-        right_vy = flat_y - right_ay;
-        right_u = right_vx*right_ex + right_vy*right_ey;
-        right_d = right_vx*right_nx + right_vy*right_ny;
-        right_q = (right_d + 0.5*curl_width)/curl_width;
-        if(right_q < 0){ right_t = 0; } else {
-            if(right_q > 1){ right_t = 1; } else {
-                right_t = right_q^2*(3-2*right_q);
-            }
-        }
-
-        if(left_t > right_t){
-            side_t = left_t;
-            target_d = -side_closure*left_d;
-            target_x = left_ax + left_u*left_ex + target_d*left_nx;
-            target_y = left_ay + left_u*left_ey + target_d*left_ny;
+        # Smoothstep gives zero curl-rate slope at both ends.
+        smooth_y = y_frac^2*(3-2*y_frac);
+        curl_fraction = smooth_y^curl_growth_power;
+        width_frac = flat_x/half_W;
+        side_weight = abs(width_frac);
+        if(width_frac < 0){
+            side_sign = -1;
         } else {
-            side_t = right_t;
-            target_d = -side_closure*right_d;
-            target_x = right_ax + right_u*right_ex + target_d*right_nx;
-            target_y = right_ay + right_u*right_ey + target_d*right_ny;
+            if(width_frac > 0){
+                side_sign = 1;
+            } else {
+                side_sign = 0;
+            }
         }
+
+        # Centerline moves forward and then curls back. Each long edge
+        # follows a shorter forward bow and ends at apex_y, so the
+        # meeting point stays in front of rather than on the fixed edge.
+        center_y = free_center_y*curl_fraction
+                 + center_forward_bulge*4*y_frac*(1-y_frac);
+        center_z = 0.5*film_t
+                 + (free_center_height-film_t)*curl_fraction
+                 + center_ridge_lift*4*curl_fraction*(1-curl_fraction);
+        edge_x_abs = half_W*(1-curl_fraction);
+        edge_y = apex_y*curl_fraction
+               + edge_forward_bulge*4*y_frac*(1-y_frac);
+        edge_z = 0.5*film_t
+               + (apex_height-film_t)*curl_fraction;
+
+        # Ruled base patch between the shared centerline and each side.
+        # Its x sign is fixed by side_sign, so the two halves cannot cross.
+        # center_z >= edge_z makes height increase monotonically from
+        # either side toward the center ridge.
+        base_x = side_sign*side_weight*edge_x_abs;
+        base_y = (1-side_weight)*center_y + side_weight*edge_y;
+        base_z = (1-side_weight)*center_z + side_weight*edge_z;
+
+        # Exact free-edge target. It runs from the forward center point
+        # to the apex on each side and leaves only a narrow opening.
+        free_x = side_sign*free_lobe_half_width*sin(pi_val*side_weight);
+        free_y = apex_y
+               + (free_center_y-apex_y)*(1-side_weight)^free_y_power;
+        free_z = free_center_height-0.5*film_t
+               + (apex_height-free_center_height)*side_weight^free_z_power;
+        free_base_y = (1-side_weight)*free_center_y
+                    + side_weight*apex_y;
+        free_base_z = (1-side_weight)*(free_center_height-0.5*film_t)
+                    + side_weight*(apex_height-0.5*film_t);
 
         id = (iy-1)*Nxv + ix;
-        px(id) = (1-side_t)*flat_x + side_t*target_x;
-        py(id) = (1-side_t)*flat_y + side_t*target_y;
-        pz(id) = center_lift_slope*flat_y + side_t*(fold_extra_lift*y_frac^1.25 + tip_extra_lift*y_frac^2) + transition_round_lift*side_t*(1-side_t)*y_frac;
+        px(id) = base_x + curl_fraction*free_x;
+        py(id) = base_y + curl_fraction*(free_y-free_base_y);
+        pz(id) = base_z + curl_fraction*(free_z-free_base_z);
     }
 }
 
+# Offset the mid-surface by +/- film_t/2 along its local normal to make
+# a closed, nominally 500 nm thick solid.
 vtx = matrix(2*Nsurf,3);
 for(ix=1:Nxv){
     for(iy=1:Nyv){
         id = (iy-1)*Nxv + ix;
-        if(ix == 1){ idx1 = id+1; idx0 = id; } else { if(ix == Nxv){ idx1 = id; idx0 = id-1; } else { idx1 = id+1; idx0 = id-1; } }
-        if(iy == 1){ idy1 = id+Nxv; idy0 = id; } else { if(iy == Nyv){ idy1 = id; idy0 = id-Nxv; } else { idy1 = id+Nxv; idy0 = id-Nxv; } }
-        txv_x = px(idx1)-px(idx0); txv_y = py(idx1)-py(idx0); txv_z = pz(idx1)-pz(idx0);
-        tyv_x = px(idy1)-px(idy0); tyv_y = py(idy1)-py(idy0); tyv_z = pz(idy1)-pz(idy0);
-        normal_x = txv_y*tyv_z - txv_z*tyv_y;
-        normal_y = txv_z*tyv_x - txv_x*tyv_z;
-        normal_z = txv_x*tyv_y - txv_y*tyv_x;
+
+        if(ix == 1){
+            idx1 = id+1;
+            idx0 = id;
+        } else {
+            if(ix == Nxv){
+                idx1 = id;
+                idx0 = id-1;
+            } else {
+                idx1 = id+1;
+                idx0 = id-1;
+            }
+        }
+
+        if(iy == 1){
+            idy1 = id+Nxv;
+            idy0 = id;
+        } else {
+            if(iy == Nyv){
+                idy1 = id;
+                idy0 = id-Nxv;
+            } else {
+                idy1 = id+Nxv;
+                idy0 = id-Nxv;
+            }
+        }
+
+        tx_x = px(idx1)-px(idx0);
+        tx_y = py(idx1)-py(idx0);
+        tx_z = pz(idx1)-pz(idx0);
+        ty_x = px(idy1)-px(idy0);
+        ty_y = py(idy1)-py(idy0);
+        ty_z = pz(idy1)-pz(idy0);
+
+        normal_x = tx_y*ty_z - tx_z*ty_y;
+        normal_y = tx_z*ty_x - tx_x*ty_z;
+        normal_z = tx_x*ty_y - tx_y*ty_x;
         normal_mag = sqrt(normal_x^2 + normal_y^2 + normal_z^2);
-        normal_x = normal_x/normal_mag; normal_y = normal_y/normal_mag; normal_z = normal_z/normal_mag;
-        vtx(id,1)=px(id)+0.5*film_t*normal_x; vtx(id,2)=py(id)+0.5*film_t*normal_y; vtx(id,3)=pz(id)+0.5*film_t*normal_z;
-        vtx(id+Nsurf,1)=px(id)-0.5*film_t*normal_x; vtx(id+Nsurf,2)=py(id)-0.5*film_t*normal_y; vtx(id+Nsurf,3)=pz(id)-0.5*film_t*normal_z;
+        normal_x = normal_x/normal_mag;
+        normal_y = normal_y/normal_mag;
+        normal_z = normal_z/normal_mag;
+
+        # The analytic normal of the fixed edge is +z, ensuring that its
+        # lower film face lies exactly on the substrate at z=0.
+        if(iy == 1){
+            normal_x = 0;
+            normal_y = 0;
+            normal_z = 1;
+        }
+
+        # Give the two coincident free corners the same thickness
+        # direction, so both faces also meet at the apex.
+        if(iy == Nyv){
+            if(ix == 1){
+                normal_x = 0;
+                normal_y = 0;
+                normal_z = 1;
+            }
+            if(ix == Nxv){
+                normal_x = 0;
+                normal_y = 0;
+                normal_z = 1;
+            }
+        }
+
+        vtx(id,1) = px(id) + 0.5*film_t*normal_x;
+        vtx(id,2) = py(id) + 0.5*film_t*normal_y;
+        vtx(id,3) = pz(id) + 0.5*film_t*normal_z;
+        vtx(id+Nsurf,1) = px(id) - 0.5*film_t*normal_x;
+        vtx(id+Nsurf,2) = py(id) - 0.5*film_t*normal_y;
+        vtx(id+Nsurf,3) = pz(id) - 0.5*film_t*normal_z;
     }
 }
 
+# Triangulate the upper and lower skins and close all four boundary walls.
 Nfacets = 4*Nx*Ny + 4*Nx + 4*Ny;
 fct = matrix(4,1,Nfacets);
 fi = 1;
+
 for(ix=1:Nx){
     for(iy=1:Ny){
-        id00 = (iy-1)*Nxv + ix; id10 = id00 + 1; id01 = id00 + Nxv; id11 = id01 + 1;
-        b00 = id00 + Nsurf; b10 = id10 + Nsurf; b01 = id01 + Nsurf; b11 = id11 + Nsurf;
+        id00 = (iy-1)*Nxv + ix;
+        id10 = id00 + 1;
+        id01 = id00 + Nxv;
+        id11 = id01 + 1;
+        b00 = id00 + Nsurf;
+        b10 = id10 + Nsurf;
+        b01 = id01 + Nsurf;
+        b11 = id11 + Nsurf;
+
         fct(1,1,fi)=id00; fct(2,1,fi)=id10; fct(3,1,fi)=id11; fi=fi+1;
         fct(1,1,fi)=id00; fct(2,1,fi)=id11; fct(3,1,fi)=id01; fi=fi+1;
         fct(1,1,fi)=b00; fct(2,1,fi)=b11; fct(3,1,fi)=b10; fi=fi+1;
         fct(1,1,fi)=b00; fct(2,1,fi)=b01; fct(3,1,fi)=b11; fi=fi+1;
     }
 }
+
+# Fixed and free short-edge walls.
 for(ix=1:Nx){
-    id0 = ix; id1 = ix+1; b0 = id0 + Nsurf; b1 = id1 + Nsurf;
+    id0 = ix;
+    id1 = ix+1;
+    b0 = id0 + Nsurf;
+    b1 = id1 + Nsurf;
     fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=b0; fi=fi+1;
     fct(1,1,fi)=id0; fct(2,1,fi)=id1; fct(3,1,fi)=b1; fi=fi+1;
-    id0 = Ny*Nxv + ix; id1 = id0 + 1; b0 = id0 + Nsurf; b1 = id1 + Nsurf;
+
+    id0 = Ny*Nxv + ix;
+    id1 = id0 + 1;
+    b0 = id0 + Nsurf;
+    b1 = id1 + Nsurf;
     fct(1,1,fi)=id0; fct(2,1,fi)=b0; fct(3,1,fi)=b1; fi=fi+1;
     fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=id1; fi=fi+1;
 }
+
+# The two long-edge walls; both move inward and return toward y=0,
+# and their terminal points meet above the fixed-edge midpoint.
 for(iy=1:Ny){
-    id0 = (iy-1)*Nxv + 1; id1 = id0 + Nxv; b0 = id0 + Nsurf; b1 = id1 + Nsurf;
+    id0 = (iy-1)*Nxv + 1;
+    id1 = id0 + Nxv;
+    b0 = id0 + Nsurf;
+    b1 = id1 + Nsurf;
     fct(1,1,fi)=id0; fct(2,1,fi)=b0; fct(3,1,fi)=b1; fi=fi+1;
     fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=id1; fi=fi+1;
-    id0 = (iy-1)*Nxv + Nxv; id1 = id0 + Nxv; b0 = id0 + Nsurf; b1 = id1 + Nsurf;
+
+    id0 = (iy-1)*Nxv + Nxv;
+    id1 = id0 + Nxv;
+    b0 = id0 + Nsurf;
+    b1 = id1 + Nsurf;
     fct(1,1,fi)=id0; fct(2,1,fi)=id1; fct(3,1,fi)=b1; fi=fi+1;
     fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=b0; fi=fi+1;
 }
 
-film_min_x = vtx(1,1); film_max_x = vtx(1,1);
-film_min_y = vtx(1,2); film_max_y = vtx(1,2);
-film_min_z = vtx(1,3); film_max_z = vtx(1,3);
+addplanarsolid;
+set("name","Taper_W250_L200_VO2");
+set("vertices",vtx);
+set("facets",fct);
+set("material",film_material);
+addtogroup("Taper_W250_L200_geometry");
+
+# Finite visualization substrate. Its top surface is z=0 and the complete
+# fixed edge of the membrane lies on it.
+substrate_margin_x = 30*um;
+substrate_margin_y = 30*um;
+substrate_depth = 10*um;
+
+addrect;
+set("name","SiO2_substrate");
+set("x",0);
+set("x span",pattern_W + 2*substrate_margin_x);
+set("y",0.5*pattern_L);
+set("y span",pattern_L + 2*substrate_margin_y);
+set("z",substrate_top_z - 0.5*substrate_depth);
+set("z span",substrate_depth);
+set("material",substrate_material);
+addtogroup("Taper_W250_L200_geometry");
+
+# Geometry checks printed to the Lumerical script prompt.
+left_tip_id = Ny*Nxv + 1;
+right_tip_id = Ny*Nxv + Nxv;
+tip_separation = sqrt((px(left_tip_id)-px(right_tip_id))^2 + (py(left_tip_id)-py(right_tip_id))^2 + (pz(left_tip_id)-pz(right_tip_id))^2);
+tip_offset_from_fixed_midpoint = sqrt(px(left_tip_id)^2 + py(left_tip_id)^2);
+?"Unrolled membrane L x W x t = "+num2str(pattern_L/um)+" x "+num2str(pattern_W/um)+" x "+num2str(film_t/nm)+" um, um, nm";
+?"Free-corner separation = "+num2str(tip_separation/nm)+" nm";
+?"Apex XY offset from fixed-edge midpoint = "+num2str(tip_offset_from_fixed_midpoint/nm)+" nm";
+
+# Extract the actual curled-film bounds for the FDTD region, sources,
+# and field-monitor locations used by every illumination angle.
+film_min_x = vtx(1,1);
+film_max_x = vtx(1,1);
+film_min_y = vtx(1,2);
+film_max_y = vtx(1,2);
+film_min_z = vtx(1,3);
+film_max_z = vtx(1,3);
 for(vertex_index=2:2*Nsurf){
     if(vtx(vertex_index,1) < film_min_x){ film_min_x = vtx(vertex_index,1); }
     if(vtx(vertex_index,1) > film_max_x){ film_max_x = vtx(vertex_index,1); }
@@ -167,42 +306,6 @@ for(vertex_index=2:2*Nsurf){
     if(vtx(vertex_index,3) < film_min_z){ film_min_z = vtx(vertex_index,3); }
     if(vtx(vertex_index,3) > film_max_z){ film_max_z = vtx(vertex_index,3); }
 }
-z_shift = substrate_top_z - film_min_z;
-for(vertex_index=1:2*Nsurf){
-    vtx(vertex_index,3) = vtx(vertex_index,3) + z_shift;
-}
-film_max_z = film_max_z + z_shift;
-film_min_z = substrate_top_z;
-
-addplanarsolid;
-set("vertices",vtx);
-set("facets",fct);
-set("name","Taper_W150_L150_VO2");
-set("material",film_material);
-addtogroup("Taper_W150_L150_group");
-
-substrate_margin_x = 25*um;
-substrate_margin_y = 25*um;
-xmin = film_min_x - substrate_margin_x;
-xmax = film_max_x + substrate_margin_x;
-ymin = film_min_y - substrate_margin_y;
-ymax = film_max_y + substrate_margin_y;
-zmin = substrate_top_z;
-xc = (xmin+xmax)/2;
-yc = (ymin+ymax)/2;
-xs = xmax-xmin;
-ys = ymax-ymin;
-
-addrect;
-set("name","SiO2_substrate");
-set("x",xc);
-set("x span",xs);
-set("y",yc);
-set("y span",ys);
-set("z",zmin-5*um);
-set("z span",10*um);
-set("material",substrate_material);
-addtogroup("Taper_W150_L150_group");
 
 fdtd_margin_x = 10*um;
 fdtd_margin_y = 10*um;
@@ -231,7 +334,6 @@ monitor_zc = (monitor_zmin+monitor_zmax)/2;
 monitor_zs = monitor_zmax-monitor_zmin;
 
 addfdtd;
-set("dimension",2);
 set("x",fdtd_xc);
 set("x span",fdtd_xs);
 set("y",fdtd_yc);

@@ -100,13 +100,17 @@ target_kz = -src_pos_z
 ## Taper
 
 - 文件：`整体建模/Taper_FDTD.txt`
-- 结构：使用 `addplanarsolid` 手写等厚双侧斜折/卷曲曲面，并保留 SiO2 衬底。
-- 卷曲前尺寸：`pattern_W = 150 um`，`pattern_L = 150 um`。
-- 固定边：`y = 0` 的整条边固定在 SiO2 衬底上，衬底顶面为 `z = 0`。
-- 折痕位置：两条对称斜折痕分别从 `(-pattern_W/2, 0)` 和 `(pattern_W/2, 0)` 连到 `(0, pattern_L)`。
-- 左右上角三角区域在有限宽度 `curl_width` 的平滑折痕区内向中线卷起，最终在中线附近形成一对靠近的三角卷曲片。
-- 关键可调参数：`curl_width`、`side_closure`、`center_lift_slope`、`fold_extra_lift`、`tip_extra_lift`、`transition_round_lift`。
-- Monitors：五个统一命名的频域场 monitor。
+- 脚本范围：仅生成 VO2 薄膜和 SiO2 衬底，不含 FDTD 区域、光源、monitor 或 `run`。
+- 结构：使用 `addplanarsolid` 构造一张连续等厚自卷曲膜，不再使用两条斜折痕或相互独立的三角片。
+- 卷曲前尺寸：`pattern_L = 200 um`，`pattern_W = 250 um`，`film_t = 500 nm`。
+- 固定边：`y = 0` 的完整 250 um 短边固定在 SiO2 衬底顶面 `z = 0`。
+- 卷曲方式：沿 200 um 长度方向，两条长边同时向中线内收并朝 `y = 0` 固定边回卷；自由端两个角点最终在固定边中点正上方精确重合。
+- 无自交约束：左右半膜共享中线，但左半始终位于 `x <= 0`、右半始终位于 `x >= 0`；旧版内部权重导致的交叉穿插已移除。
+- 锥形前部：中心线先向前拱出再回卷，两条长边以更短的前拱路径完全返回 `y = 0`；自由短边在汇合点下方形成窄小水滴形开口，整体构成连续类圆锥壳。
+- 当前 SEM 标定形态：两个自由角点在模型最高位置 `(x,y,z) = (0,45,105) um` 精确汇合，不再强制返回固定边 `y = 0`；自由短边中点位于 `y = 65 um, z = 105 um`，开口半宽仅 `2.5 um`。
+- 横向高度约束：除固定边及最终闭合边外，每个材料长度截面均由左右两侧向中线单调升高；`center_ridge_lift = 18 um` 用于形成连续中央高脊，不再出现中间低、两侧高的截面。
+- 关键可调参数：`apex_height`、`apex_y`、`free_center_height`、`free_center_y`、`center_ridge_lift`、`center_forward_bulge`、`edge_forward_bulge`、`free_lobe_half_width`。
+- `Taper/` 中经度 `0:30:180 deg`、纬度 `-60:30:60 deg` 的全部 `35` 个角度脚本已同步使用上述几何；各文件原有的经纬度、注入轴、平面波和五个 monitor 设置保持不变。
 
 ## 1V
 
@@ -142,7 +146,8 @@ target_kz = -src_pos_z
 
 ## 当前状态
 
-- `整体建模/` 中的八个基础脚本均包含结构、SiO2 衬底、紧凑 FDTD 区域、Bloch/Periodic 平面波和五个统一命名的 profile monitor。
+- `整体建模/` 中除 `Taper_FDTD.txt` 外的七个基础脚本包含结构、SiO2 衬底、紧凑 FDTD 区域、Bloch/Periodic 平面波和五个统一命名的 profile monitor；`Taper_FDTD.txt` 按最新要求仅保留薄膜与衬底模型。
+- `Taper/` 的 `35` 个角度脚本均已改用当前 200 um × 250 um × 500 nm 的 SEM 标定类圆锥模型，且所有角度特有的光源参数未改动。
 - Tube、Ring、Taper、Helix、Arch、2V 和 3V 文件夹当前各保留 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
 - `1V/` 文件夹当前保留 `34` 个角度脚本；`1V_lon030_latp30_FDTD.txt` 已被删除，其余文件仍使用相同的经纬度命名规则。
 - 八个器件文件夹当前各包含五个 monitor 图片代码文件，可用于绘制对应仿真的五个电场截面。
