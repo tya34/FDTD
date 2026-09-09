@@ -2,18 +2,16 @@
 
 ## 目标
 
-复现 Zhang 等 2024 年文章中用于光电测试的非平面自卷曲结构。当前已完成并统一维护六类结构：Ring、Tube、Arch、Helix、Taper 和 1V。
+复现 Zhang 等 2024 年文章中用于光电测试的非平面自卷曲结构。当前已完成并统一维护八类结构：Ring、Tube、Arch、Helix、Taper、1V、2V 和 3V。
 
 ## 统一设置
 
 - 材料：VO2 薄膜，SiO2 衬底。
 - VO2 薄膜厚度：500 nm。
-- 光源：默认使用沿 `-z` 方向入射的 BFAST 平面波，`polarization angle = 90 deg`。
-- FDTD：紧凑区域，`mesh accuracy = 1`，各边界使用 PML。
-- XY monitor：统一为两个穿过结构的水平截面：
-  - `xy_lower_through_*`
-  - `xy_upper_through_*`
-- 竖直截面 monitor：保留 `yz_center`、`yz_side`、`xz_center`，z span 覆盖结构和部分衬底区域。
+- 光源：统一使用 Bloch/Periodic 平面波，`polarization angle = 90 deg`。整体建模脚本默认沿 `-z` 方向正入射；批量角度脚本根据经纬度选择最近的注入面。
+- FDTD：紧凑区域，`mesh accuracy = 1`，`x min`、`x max`、`y min`、`y max`、`z min`、`z max` 六个边界均为 PML。
+- 衬底：统一使用 `SiO2 (Glass) - Palik`。脚本中的有限几何体向 PML 内延伸，用于表示计算域内的半无限 SiO2 基底。
+- 每个脚本统一包含五个频域场 monitor：`field_xy_lower`、`field_xy_upper`、`field_yz_center`、`field_yz_side` 和 `field_xz_reference`。
 
 ## 经纬度入射角定义
 
@@ -46,31 +44,39 @@ target_kz = -src_pos_z
 
 批量角度脚本中，先根据上述公式计算 `src_pos_x`、`src_pos_y`、`src_pos_z` 和 `target_kx`、`target_ky`、`target_kz`，再选择绝对值最大的传播分量作为 `injection axis`，以避免接近擦边的源注入。
 
+## Monitor 与图片代码
+
+- 八个器件文件夹中各有五个后处理文件：`monitor_field_xy_lower.txt`、`monitor_field_xy_upper.txt`、`monitor_field_yz_center.txt`、`monitor_field_yz_side.txt` 和 `monitor_field_xz_reference.txt`。
+- 每个文件对应一个同名 monitor。代码通过 `getresult("<monitor name>","E")` 取得电场，计算 `sqrt(abs(Ex)^2 + abs(Ey)^2 + abs(Ez)^2)`，再用 `image` 绘制电场模长 `|E|`。
+- XY 截面使用 `x`、`y` 坐标；YZ 截面使用 `y`、`z` 坐标；XZ 截面使用 `x`、`z` 坐标。坐标统一换算为 `um`。
+- 所有图片代码沿用根目录 `monitor.txt` 的显示范围，将 colorbar 固定为 `0` 到 `3`。
+- 后处理文件应在对应 FDTD 仿真已经运行并且 monitor 数据可用时执行。文件通过 `image` 打开图窗，不会自动写出 PNG 文件。
+
 ## Ring
 
-- 文件：`Ring_FDTD.txt`
+- 文件：`整体建模/Ring_FDTD.txt`
 - 结构：使用 Lumerical 内置 `addring` primitive。
 - 卷曲前尺寸：`pattern_W = 30 um`，等效环长约 `300 um`。
 - 中心半径：`ring_R = 100 um`。
 - 薄膜厚度：通过 `inner_R = ring_R - film_t/2` 和 `outer_R = ring_R + film_t/2` 设置。
 - 轴向宽度：通过 `z span = pattern_W` 设置。
 - 衬底顶面：`substrate_top_z = -outer_R`，使圆环最低点接触衬底。
-- XY monitors：`xy_lower` 和 `xy_upper`。
+- Monitors：五个统一命名的频域场 monitor。
 
 ## Tube
 
-- 文件：`Tube_FDTD.txt`
+- 文件：`整体建模/Tube_FDTD.txt`
 - 结构：使用 Lumerical 内置 `addring` primitive 作为卷曲圆筒。
 - 卷曲前尺寸：`pattern_W = 250 um`，`pattern_L = 150 um`。
 - 中心半径：`tube_R = 50 um`。
 - 薄膜厚度：通过 `inner_R = tube_R - film_t/2` 和 `outer_R = tube_R + film_t/2` 设置。
 - 轴向宽度：通过 `z span = pattern_W` 设置。
 - 衬底顶面：`substrate_top_z = -outer_R`。
-- XY monitors：`xy_lower` 和 `xy_upper`。
+- Monitors：五个统一命名的频域场 monitor。
 
 ## Arch
 
-- 文件：`Arch_FDTD.txt`
+- 文件：`整体建模/Arch_FDTD.txt`
 - 结构：使用 `addplanarsolid` 手写等厚曲面。
 - 卷曲前尺寸：`pattern_W = 30 um`，`pattern_L = 150 um`。
 - 固定边：`y = 0` 的整条短边固定在 SiO2 衬底上，衬底顶面为 `z = 0`。
@@ -78,33 +84,33 @@ target_kz = -src_pos_z
 - `L = 150 um` 端部：中心最低点约 `z = 10 um`，两侧最高点约 `z = 20 um`。
 - 中心曲面：`z = (y/pattern_L) * (10 um + 10 um*(x/(pattern_W/2))^2)`。
 - 通过曲面法向正负偏移形成 500 nm 等厚实体，并整体平移使薄膜最低点接触衬底顶面。
-- XY monitors：`xy_lower` 和 `xy_upper`。
+- Monitors：五个统一命名的频域场 monitor。
 
 ## Helix
 
-- 文件：`Helix_FDTD.txt`
+- 文件：`整体建模/Helix_FDTD.txt`
 - 结构：使用 `addplanarsolid` 手写等厚斜折/卷曲曲面。
 - 卷曲前尺寸：`pattern_W = 50 um`，`pattern_L = 150 um`。
 - 几何理解：卷曲前矩形沿约 45 deg 斜向折痕发生卷曲式折叠；折叠后的自由短边相对原长边外伸约 `20 um`，并在 XY 投影中转为与原短边垂直。
 - 折痕位置：近似为 `y = x + fold_c`，其中 `fold_c = pattern_L - half_W - edge_overhang`。
 - 折痕区：使用有限宽度 `curl_width` 的平滑过渡。
 - 关键可调参数：`curl_width`、`pre_lift_slope`、`fold_extra_lift`、`fold_start_tangent`、`fold_end_tangent`、`post_lift_slope`。
-- XY monitors：`xy_lower` 和 `xy_upper`。
+- Monitors：五个统一命名的频域场 monitor。
 
 ## Taper
 
-- 文件：`Taper_FDTD.txt`
+- 文件：`整体建模/Taper_FDTD.txt`
 - 结构：使用 `addplanarsolid` 手写等厚双侧斜折/卷曲曲面，并保留 SiO2 衬底。
 - 卷曲前尺寸：`pattern_W = 150 um`，`pattern_L = 150 um`。
 - 固定边：`y = 0` 的整条边固定在 SiO2 衬底上，衬底顶面为 `z = 0`。
 - 折痕位置：两条对称斜折痕分别从 `(-pattern_W/2, 0)` 和 `(pattern_W/2, 0)` 连到 `(0, pattern_L)`。
 - 左右上角三角区域在有限宽度 `curl_width` 的平滑折痕区内向中线卷起，最终在中线附近形成一对靠近的三角卷曲片。
 - 关键可调参数：`curl_width`、`side_closure`、`center_lift_slope`、`fold_extra_lift`、`tip_extra_lift`、`transition_round_lift`。
-- XY monitors：`xy_lower` 和 `xy_upper`。
+- Monitors：五个统一命名的频域场 monitor。
 
 ## 1V
 
-- 文件：`1V_FDTD.txt`
+- 文件：`整体建模/1V_FDTD.txt`
 - 结构：模仿 Ring，使用 Lumerical 内置 `addring` primitive 建立不到一圈的开口圆弧。
 - 卷曲前尺寸：`pattern_W = 30 um`，`pattern_L = 300 um`。
 - 卷曲后直径：`ring_D = 110 um`，对应中心半径 `ring_R = 55 um`。
@@ -112,11 +118,11 @@ target_kz = -src_pos_z
 - 薄膜厚度：500 nm，通过 `inner_R = ring_R - film_t/2` 和 `outer_R = ring_R + film_t/2` 设置。
 - 轴向宽度：通过 `z span = pattern_W` 设置。
 - 衬底顶面：`substrate_top_z = -outer_R`，使圆弧最低点接触衬底。
-- XY monitors：`xy_lower` 和 `xy_upper`。
+- Monitors：五个统一命名的频域场 monitor。
 
 ## 2V
 
-- 文件：`2V_FDTD.txt`
+- 文件：`整体建模/2V_FDTD.txt`
 - 结构：综合 Ring/Tube 的圆弧参数化和 Arch/Helix/Taper 的 `addplanarsolid` 等厚曲面方法，建立带连续侧向偏移的开口卷曲薄膜。
 - 卷曲前尺寸：`pattern_W = 30 um`，`pattern_L = 300 um`；VO2 厚度为 `500 nm`。
 - 卷曲后直径：默认 `ring_D = 140 um`，对应圆弧角约 `245.55 deg`、开口约 `114.45 deg`，明显大于 1V 的约 `47.48 deg` 开口。
@@ -126,7 +132,7 @@ target_kz = -src_pos_z
 
 ## 3V
 
-- 文件：`3V_FDTD.txt`
+- 文件：`整体建模/3V_FDTD.txt`
 - 结构：完全沿用 2V 的 `addplanarsolid` 等厚曲面、衬底、FDTD 区域、光源和监视器设置。
 - 卷曲前尺寸：`pattern_W = 30 um`，`pattern_L = 300 um`；VO2 厚度为 `500 nm`。
 - 材料：卷曲薄膜改为 `VO2 80`，SiO2 衬底及其余光学参数不变。
@@ -136,6 +142,7 @@ target_kz = -src_pos_z
 
 ## 当前状态
 
-- `Ring_FDTD.txt`、`Tube_FDTD.txt`、`Arch_FDTD.txt`、`Helix_FDTD.txt`、`Taper_FDTD.txt`、`1V_FDTD.txt`、`2V_FDTD.txt` 和 `3V_FDTD.txt` 均包含结构、衬底、紧凑 FDTD 区域、默认 `-z` 入射光源和 profile monitors。
-- Ring、Tube、Arch、Helix、Taper、2V 和 3V 已各生成 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
-- `1V_FDTD.txt` 当前为基础正入射脚本；`1V/` 文件夹已按 Ring 的批量角度生成逻辑展开 `35` 个角度脚本，经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
+- `整体建模/` 中的八个基础脚本均包含结构、SiO2 衬底、紧凑 FDTD 区域、Bloch/Periodic 平面波和五个统一命名的 profile monitor。
+- Tube、Ring、Taper、Helix、Arch、2V 和 3V 文件夹当前各保留 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
+- `1V/` 文件夹当前保留 `34` 个角度脚本；`1V_lon030_latp30_FDTD.txt` 已被删除，其余文件仍使用相同的经纬度命名规则。
+- 八个器件文件夹当前各包含五个 monitor 图片代码文件，可用于绘制对应仿真的五个电场截面。
