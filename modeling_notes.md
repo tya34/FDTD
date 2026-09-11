@@ -148,14 +148,14 @@ target_kz = -src_pos_z
 
 - 新建 `整体建模/`，其中八个基础脚本均只包含“主体结构 + FDTD + 半无限衬底”，不含光源和 monitor。
 - 所有模型统一按“建立主体并取得真实包围盒 → 设置 FDTD → 根据 FDTD 横向边界添加衬底”的顺序执行。Taper 衬底不再使用 `pattern_L = 200 um` 的展开长度，而是使用卷曲后主体的 `film_min_y/film_max_y` 计算 FDTD，再由 FDTD 推导衬底范围。
-- 八个器件文件夹中的 `279` 个角度脚本均基于对应整体建模追加原有角度光源和五个 monitor；经纬度到传播矢量的映射、注入轴、`forward/backward`、`angle theta`、`angle phi`、波长、偏振和器件几何保持不变。
-- 全部 `287` 个含 FDTD 区域的脚本均采用六面 PML，不显式设置 `dimension`，并由 `addfdtd` 使用默认 3D 区域。
+- 八个器件文件夹中的 `280` 个角度脚本均基于对应整体建模追加原有角度光源和五个 monitor；经纬度到传播矢量的映射、注入轴、`forward/backward`、`angle theta`、`angle phi`、波长、偏振和器件几何保持不变。
+- 全部 `288` 个含 FDTD 区域的脚本均采用六面 PML，不显式设置 `dimension`，并由 `addfdtd` 使用默认 3D 区域。
 - monitor 对象名改为 `xy_lower`、`xy_upper`、`yz_center`、`yz_side`、`xz_reference`；八个器件目录下共 `40` 个电场后处理脚本已按新名称重写。
 
 ## 当前状态
 
 - `整体建模/` 的八个基础脚本均包含主体结构、按真实主体边界设置的 FDTD 区域和覆盖 FDTD 的 SiO2 衬底，不包含光源或 monitor。
 - `Taper/` 的 `35` 个角度脚本均使用当前 200 um × 250 um × 500 nm 的 SEM 标定类圆锥模型；FDTD 和衬底改由卷曲后真实包围盒确定，角度特有的光源参数未改动。
-- Tube、Ring、Taper、Helix、Arch、2V 和 3V 文件夹当前各保留 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
-- `1V/` 文件夹当前保留 `34` 个角度脚本；`1V_lon030_latp30_FDTD.txt` 已被删除，其余文件仍使用相同的经纬度命名规则。
+- Tube、Ring、Taper、Helix、Arch、1V、2V 和 3V 文件夹当前各保留 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
+- `1V_lon030_latp30_FDTD.txt` 已补回，对应 `source_lon_deg = 30 deg`、`source_lat_deg = 30 deg`；其源位置单位向量为 `(-0.75, 0.5, 0.433013)`，目标传播单位向量为 `(0.75, -0.5, -0.433013)`，采用 x 轴 `forward` 注入，`angle theta = 41.409622 deg`，`angle phi = -139.106605 deg`。
 - 八个器件文件夹当前各包含五个按“坐标轴_位置”命名的 monitor 电场代码文件，可用于绘制对应仿真的五个电场截面。
