@@ -9,7 +9,7 @@
 - 材料：VO2 薄膜，SiO2 衬底。
 - VO2 薄膜厚度：500 nm。
 - 光源：统一使用 Bloch/Periodic 平面波，`polarization angle = 90 deg`。整体建模脚本默认沿 `-z` 方向正入射；批量角度脚本根据经纬度选择最近的注入面。
-- FDTD：所有含 FDTD 区域的脚本统一采用 `fdtd_margin_x = 50 um`、`fdtd_margin_y = 50 um`，`mesh accuracy = 1`；`x min`、`x max`、`y min`、`y max`、`z min`、`z max` 六个边界均为 PML。
+- FDTD：所有含 FDTD 区域的脚本统一采用 `fdtd_margin_x = 50 um`、`fdtd_margin_y = 50 um`，`mesh accuracy = 1`；`x min`、`x max`、`y min`、`y max`、`z min`、`z max` 六个边界均为 PML。脚本不再显式写入 `set("dimension",2);`，由 `addfdtd` 使用默认 3D 区域。
 - 衬底：统一使用 `SiO2 (Glass) - Palik`。为表示半无限 SiO2 基底，衬底在 `x/y` 四侧均比 FDTD 区域额外延伸 `5 um`；衬底厚度为 `10 um`，而 FDTD 仅进入衬底 `4 um`，因此衬底底面比 `z min` 再向下延伸 `6 um`。
 - 每个脚本统一包含五个频域场 monitor：`field_xy_lower`、`field_xy_upper`、`field_yz_center`、`field_yz_side` 和 `field_xz_reference`。
 
@@ -152,6 +152,12 @@ target_kz = -src_pos_z
 - `z` 方向保持 `fdtd_substrate_depth = 4 um`，衬底厚度保持 `10 um`；衬底底面比 FDTD 的 `z min` 深 `6 um`，确保衬底穿过底部 PML。
 - `整体建模/Taper_FDTD.txt` 只建立薄膜和衬底，不含 FDTD 区域，因此不纳入 `50 um` FDTD 单边余量统一；`Taper/` 中的 `35` 个完整角度仿真脚本已纳入。
 - 此次修改不改变器件几何、材料、经纬度入射角、注入轴、波长、偏振、边界类型或 monitor 设置。
+
+## 2026-09-11 PML 边界与 3D 默认设置统一
+
+- 再次核对全部 `286` 个含 FDTD 区域的脚本，`x/y/z` 三个方向的六个边界均设置为 PML。
+- 从 `251` 个脚本中删除显式的 `set("dimension",2);`；`Taper/` 中的 `35` 个角度脚本原本没有该行。全部脚本均由 `addfdtd` 使用默认 3D FDTD 区域。
+- 经度/纬度到传播矢量的映射、注入轴、`forward/backward`、`angle theta`、`angle phi`、光源类型、器件几何、材料、余量、衬底和 monitor 设置均保持不变。
 
 ## 当前状态
 
