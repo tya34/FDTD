@@ -9,9 +9,9 @@
 - 材料：VO2 薄膜，SiO2 衬底。
 - VO2 薄膜厚度：500 nm。
 - 光源：统一使用 Bloch/Periodic 平面波，`polarization angle = 90 deg`。整体建模脚本默认沿 `-z` 方向正入射；批量角度脚本根据经纬度选择最近的注入面。
-- FDTD：所有含 FDTD 区域的脚本统一采用 `fdtd_margin_x = 50 um`、`fdtd_margin_y = 50 um`，`mesh accuracy = 1`；`x min`、`x max`、`y min`、`y max`、`z min`、`z max` 六个边界均为 PML。脚本不再显式写入 `set("dimension",2);`，由 `addfdtd` 使用默认 3D 区域。
-- 衬底：统一使用 `SiO2 (Glass) - Palik`。为表示半无限 SiO2 基底，衬底在 `x/y` 四侧均比 FDTD 区域额外延伸 `5 um`；衬底厚度为 `10 um`，而 FDTD 仅进入衬底 `4 um`，因此衬底底面比 `z min` 再向下延伸 `6 um`。
-- 每个脚本统一包含五个频域场 monitor：`field_xy_lower`、`field_xy_upper`、`field_yz_center`、`field_yz_side` 和 `field_xz_reference`。
+- FDTD：先由主体结构的真实包围盒确定 FDTD 区域，`x/y` 两方向使用 `50 um` 单边余量，`mesh accuracy = 1`；`x min`、`x max`、`y min`、`y max`、`z min`、`z max` 六个边界均为 PML。脚本不显式写入 `set("dimension",...);`，由 `addfdtd` 使用默认 3D 区域。
+- 衬底：在 FDTD 范围确定后再添加 `SiO2 (Glass) - Palik` 衬底。衬底的 `x/y` 边界分别由 `fdtd_xmin/xmax`、`fdtd_ymin/ymax` 向外再延伸 `5 um`；衬底厚度为 `10 um`，FDTD 进入衬底 `4 um`，因此衬底底面比 `z min` 再向下延伸 `6 um`。
+- 每个角度脚本统一包含五个频域场 monitor：`xy_lower`、`xy_upper`、`yz_center`、`yz_side` 和 `xz_reference`。
 
 ## 经纬度入射角定义
 
@@ -46,7 +46,7 @@ target_kz = -src_pos_z
 
 ## Monitor 与图片代码
 
-- 八个器件文件夹中各有五个后处理文件：`monitor_field_xy_lower.txt`、`monitor_field_xy_upper.txt`、`monitor_field_yz_center.txt`、`monitor_field_yz_side.txt` 和 `monitor_field_xz_reference.txt`。
+- 八个器件文件夹中各有五个后处理文件：`monitor_xy_lower.txt`、`monitor_xy_upper.txt`、`monitor_yz_center.txt`、`monitor_yz_side.txt` 和 `monitor_xz_reference.txt`。
 - 每个文件对应一个同名 monitor。代码通过 `getresult("<monitor name>","E")` 取得电场，计算 `sqrt(abs(Ex)^2 + abs(Ey)^2 + abs(Ez)^2)`，再用 `image` 绘制电场模长 `|E|`。
 - XY 截面使用 `x`、`y` 坐标；YZ 截面使用 `y`、`z` 坐标；XZ 截面使用 `x`、`z` 坐标。坐标统一换算为 `um`。
 - 所有图片代码沿用根目录 `monitor.txt` 的显示范围，将 colorbar 固定为 `0` 到 `3`。
@@ -61,7 +61,7 @@ target_kz = -src_pos_z
 - 薄膜厚度：通过 `inner_R = ring_R - film_t/2` 和 `outer_R = ring_R + film_t/2` 设置。
 - 轴向宽度：通过 `z span = pattern_W` 设置。
 - 衬底顶面：`substrate_top_z = -outer_R`，使圆环最低点接触衬底。
-- Monitors：五个统一命名的频域场 monitor。
+- 角度脚本：追加五个统一命名的频域场 monitor。
 
 ## Tube
 
@@ -72,7 +72,7 @@ target_kz = -src_pos_z
 - 薄膜厚度：通过 `inner_R = tube_R - film_t/2` 和 `outer_R = tube_R + film_t/2` 设置。
 - 轴向宽度：通过 `z span = pattern_W` 设置。
 - 衬底顶面：`substrate_top_z = -outer_R`。
-- Monitors：五个统一命名的频域场 monitor。
+- 角度脚本：追加五个统一命名的频域场 monitor。
 
 ## Arch
 
@@ -84,7 +84,7 @@ target_kz = -src_pos_z
 - `L = 150 um` 端部：中心最低点约 `z = 10 um`，两侧最高点约 `z = 20 um`。
 - 中心曲面：`z = (y/pattern_L) * (10 um + 10 um*(x/(pattern_W/2))^2)`。
 - 通过曲面法向正负偏移形成 500 nm 等厚实体，并整体平移使薄膜最低点接触衬底顶面。
-- Monitors：五个统一命名的频域场 monitor。
+- 角度脚本：追加五个统一命名的频域场 monitor。
 
 ## Helix
 
@@ -95,12 +95,12 @@ target_kz = -src_pos_z
 - 折痕位置：近似为 `y = x + fold_c`，其中 `fold_c = pattern_L - half_W - edge_overhang`。
 - 折痕区：使用有限宽度 `curl_width` 的平滑过渡。
 - 关键可调参数：`curl_width`、`pre_lift_slope`、`fold_extra_lift`、`fold_start_tangent`、`fold_end_tangent`、`post_lift_slope`。
-- Monitors：五个统一命名的频域场 monitor。
+- 角度脚本：追加五个统一命名的频域场 monitor。
 
 ## Taper
 
 - 文件：`整体建模/Taper_FDTD.txt`
-- 脚本范围：仅生成 VO2 薄膜和 SiO2 衬底，不含 FDTD 区域、光源、monitor 或 `run`。
+- 脚本范围：生成 VO2 主体、按主体真实包围盒确定的 FDTD 区域，以及由 FDTD 横向范围反推的 SiO2 衬底；不含光源、monitor 或 `run`。
 - 结构：使用 `addplanarsolid` 构造一张连续等厚自卷曲膜，不再使用两条斜折痕或相互独立的三角片。
 - 卷曲前尺寸：`pattern_L = 200 um`，`pattern_W = 250 um`，`film_t = 500 nm`。
 - 固定边：`y = 0` 的完整 250 um 短边固定在 SiO2 衬底顶面 `z = 0`。
@@ -122,7 +122,7 @@ target_kz = -src_pos_z
 - 薄膜厚度：500 nm，通过 `inner_R = ring_R - film_t/2` 和 `outer_R = ring_R + film_t/2` 设置。
 - 轴向宽度：通过 `z span = pattern_W` 设置。
 - 衬底顶面：`substrate_top_z = -outer_R`，使圆弧最低点接触衬底。
-- Monitors：五个统一命名的频域场 monitor。
+- 角度脚本：追加五个统一命名的频域场 monitor。
 
 ## 2V
 
@@ -144,25 +144,18 @@ target_kz = -src_pos_z
 - 左倾方式：继续使用 `x = x0-z0*tan(axis_tilt_deg)`，并将 `axis_tilt_deg` 改为 `30 deg`。
 - `3V/` 文件夹按统一经纬度规则包含 `35` 个角度脚本。
 
-## 2026-09-11 横向余量与半无限衬底统一
+## 2026-09-11 主体、FDTD、衬底与 monitor 重构
 
-- 修改范围：八个器件文件夹中的全部角度脚本，以及 `整体建模/` 中除几何专用 `Taper_FDTD.txt` 外的七个基础 FDTD 脚本，共 `286` 个含 FDTD 区域的脚本。
-- 所有上述脚本的 FDTD 区域在 `x`、`y` 两方向均采用 `50 um` 单边余量，不再保留原来的 `5 um` 或 `10 um` 横向余量。
-- 所有上述脚本增加统一变量 `substrate_xy_overhang = 5 um`。SiO2 衬底的 `x/y` 覆盖范围由 FDTD 横向范围向外再延伸 `5 um`，确保衬底完整穿过横向 PML 边界，不在仿真域内部产生人为基底侧壁。
-- `z` 方向保持 `fdtd_substrate_depth = 4 um`，衬底厚度保持 `10 um`；衬底底面比 FDTD 的 `z min` 深 `6 um`，确保衬底穿过底部 PML。
-- `整体建模/Taper_FDTD.txt` 只建立薄膜和衬底，不含 FDTD 区域，因此不纳入 `50 um` FDTD 单边余量统一；`Taper/` 中的 `35` 个完整角度仿真脚本已纳入。
-- 此次修改不改变器件几何、材料、经纬度入射角、注入轴、波长、偏振、边界类型或 monitor 设置。
-
-## 2026-09-11 PML 边界与 3D 默认设置统一
-
-- 再次核对全部 `286` 个含 FDTD 区域的脚本，`x/y/z` 三个方向的六个边界均设置为 PML。
-- 从 `251` 个脚本中删除显式的 `set("dimension",2);`；`Taper/` 中的 `35` 个角度脚本原本没有该行。全部脚本均由 `addfdtd` 使用默认 3D FDTD 区域。
-- 经度/纬度到传播矢量的映射、注入轴、`forward/backward`、`angle theta`、`angle phi`、光源类型、器件几何、材料、余量、衬底和 monitor 设置均保持不变。
+- 新建 `整体建模/`，其中八个基础脚本均只包含“主体结构 + FDTD + 半无限衬底”，不含光源和 monitor。
+- 所有模型统一按“建立主体并取得真实包围盒 → 设置 FDTD → 根据 FDTD 横向边界添加衬底”的顺序执行。Taper 衬底不再使用 `pattern_L = 200 um` 的展开长度，而是使用卷曲后主体的 `film_min_y/film_max_y` 计算 FDTD，再由 FDTD 推导衬底范围。
+- 八个器件文件夹中的 `279` 个角度脚本均基于对应整体建模追加原有角度光源和五个 monitor；经纬度到传播矢量的映射、注入轴、`forward/backward`、`angle theta`、`angle phi`、波长、偏振和器件几何保持不变。
+- 全部 `287` 个含 FDTD 区域的脚本均采用六面 PML，不显式设置 `dimension`，并由 `addfdtd` 使用默认 3D 区域。
+- monitor 对象名改为 `xy_lower`、`xy_upper`、`yz_center`、`yz_side`、`xz_reference`；八个器件目录下共 `40` 个电场后处理脚本已按新名称重写。
 
 ## 当前状态
 
-- `整体建模/` 中除 `Taper_FDTD.txt` 外的七个基础脚本包含结构、SiO2 衬底、统一 `50 um` 横向单边余量的 FDTD 区域、Bloch/Periodic 平面波和五个统一命名的 profile monitor；`Taper_FDTD.txt` 按最新要求仅保留薄膜与衬底模型。
-- `Taper/` 的 `35` 个角度脚本均已改用当前 200 um × 250 um × 500 nm 的 SEM 标定类圆锥模型，且所有角度特有的光源参数未改动。
+- `整体建模/` 的八个基础脚本均包含主体结构、按真实主体边界设置的 FDTD 区域和覆盖 FDTD 的 SiO2 衬底，不包含光源或 monitor。
+- `Taper/` 的 `35` 个角度脚本均使用当前 200 um × 250 um × 500 nm 的 SEM 标定类圆锥模型；FDTD 和衬底改由卷曲后真实包围盒确定，角度特有的光源参数未改动。
 - Tube、Ring、Taper、Helix、Arch、2V 和 3V 文件夹当前各保留 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
 - `1V/` 文件夹当前保留 `34` 个角度脚本；`1V_lon030_latp30_FDTD.txt` 已被删除，其余文件仍使用相同的经纬度命名规则。
-- 八个器件文件夹当前各包含五个 monitor 图片代码文件，可用于绘制对应仿真的五个电场截面。
+- 八个器件文件夹当前各包含五个按“坐标轴_位置”命名的 monitor 电场代码文件，可用于绘制对应仿真的五个电场截面。

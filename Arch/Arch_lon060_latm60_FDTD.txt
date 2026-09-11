@@ -116,29 +116,32 @@ addtogroup("Arch_W30_L150_group");
 fdtd_margin_x = 50*um;
 fdtd_margin_y = 50*um;
 substrate_xy_overhang = 5*um;
-xmin = -half_W - fdtd_margin_x - substrate_xy_overhang;
-xmax = half_W + fdtd_margin_x + substrate_xy_overhang;
-ymin = -fdtd_margin_y - substrate_xy_overhang;
-ymax = pattern_L + fdtd_margin_y + substrate_xy_overhang;
-zmin = substrate_top_z; zmax = substrate_top_z + arch_edge_tip_z + 15*um;
-xc = (xmin+xmax)/2; yc = (ymin+ymax)/2; zc = (zmin+zmax)/2;
-xs = xmax-xmin; ys = ymax-ymin; zs = zmax-zmin;
-
-addrect; set("name","SiO2_substrate");
-set("x",xc); set("x span",xs); set("y",yc); set("y span",ys); set("z",zmin-5*um); set("z span",10*um);
-set("material",substrate_material);
-
 fdtd_substrate_depth = 4*um;
-source_gap_above_arch = 8*um;
-source_top_gap = 4*um;
+fdtd_air_margin = 12*um;
 
-fdtd_xmin = -half_W - fdtd_margin_x;
-fdtd_xmax = half_W + fdtd_margin_x;
-fdtd_ymin = -fdtd_margin_y;
-fdtd_ymax = pattern_L + fdtd_margin_y;
+# Size the FDTD region from the actual device bounds before adding the substrate.
+# Extract the actual solid bounds after the z shift.
+film_min_x = vtx(1,1);
+film_max_x = vtx(1,1);
+film_min_y = vtx(1,2);
+film_max_y = vtx(1,2);
+film_min_z = vtx(1,3);
+film_max_z = vtx(1,3);
+for(vertex_index=2:2*Nsurf){
+    if(vtx(vertex_index,1) < film_min_x){ film_min_x = vtx(vertex_index,1); }
+    if(vtx(vertex_index,1) > film_max_x){ film_max_x = vtx(vertex_index,1); }
+    if(vtx(vertex_index,2) < film_min_y){ film_min_y = vtx(vertex_index,2); }
+    if(vtx(vertex_index,2) > film_max_y){ film_max_y = vtx(vertex_index,2); }
+    if(vtx(vertex_index,3) < film_min_z){ film_min_z = vtx(vertex_index,3); }
+    if(vtx(vertex_index,3) > film_max_z){ film_max_z = vtx(vertex_index,3); }
+}
+
+fdtd_xmin = film_min_x - fdtd_margin_x;
+fdtd_xmax = film_max_x + fdtd_margin_x;
+fdtd_ymin = film_min_y - fdtd_margin_y;
+fdtd_ymax = film_max_y + fdtd_margin_y;
 fdtd_zmin = substrate_top_z - fdtd_substrate_depth;
-source_z = substrate_top_z + arch_edge_tip_z + source_gap_above_arch;
-fdtd_zmax = source_z + source_top_gap;
+fdtd_zmax = film_max_z + fdtd_air_margin;
 
 fdtd_xc = (fdtd_xmin+fdtd_xmax)/2;
 fdtd_yc = (fdtd_ymin+fdtd_ymax)/2;
@@ -147,13 +150,7 @@ fdtd_xs = fdtd_xmax-fdtd_xmin;
 fdtd_ys = fdtd_ymax-fdtd_ymin;
 fdtd_zs = fdtd_zmax-fdtd_zmin;
 
-monitor_zmin = substrate_top_z - 3*um;
-monitor_zmax = source_z - 1*um;
-monitor_zc = (monitor_zmin+monitor_zmax)/2;
-monitor_zs = monitor_zmax-monitor_zmin;
-
 addfdtd;
-set("dimension",2);
 set("x",fdtd_xc);
 set("x span",fdtd_xs);
 set("y",fdtd_yc);
@@ -167,6 +164,35 @@ set("y min bc","PML");
 set("y max bc","PML");
 set("z min bc","PML");
 set("z max bc","PML");
+
+# Add the semi-infinite substrate after the FDTD footprint is known.
+substrate_depth = 10*um;
+substrate_xmin = fdtd_xmin - substrate_xy_overhang;
+substrate_xmax = fdtd_xmax + substrate_xy_overhang;
+substrate_ymin = fdtd_ymin - substrate_xy_overhang;
+substrate_ymax = fdtd_ymax + substrate_xy_overhang;
+substrate_xc = (substrate_xmin+substrate_xmax)/2;
+substrate_yc = (substrate_ymin+substrate_ymax)/2;
+substrate_xs = substrate_xmax-substrate_xmin;
+substrate_ys = substrate_ymax-substrate_ymin;
+
+addrect;
+set("name","SiO2_substrate");
+set("x",substrate_xc);
+set("x span",substrate_xs);
+set("y",substrate_yc);
+set("y span",substrate_ys);
+set("z",substrate_top_z-0.5*substrate_depth);
+set("z span",substrate_depth);
+set("material",substrate_material);
+
+# Angle-specific source and monitor placement helpers.
+source_top_gap = 4*um;
+source_z = fdtd_zmax - source_top_gap;
+monitor_zmin = substrate_top_z - 3*um;
+monitor_zmax = source_z - 1*um;
+monitor_zc = (monitor_zmin+monitor_zmax)/2;
+monitor_zs = monitor_zmax-monitor_zmin;
 
 # User source coordinates: source_lon_deg = 60 deg, source_lat_deg = -60 deg.
 # Earth-like source hemisphere: longitude runs from -x through +z to +x; latitude runs from -y to +y.
@@ -202,23 +228,23 @@ set("z span",fdtd_zs);
 set("wavelength start",lambda0);
 set("wavelength stop",lambda0);
 
-addprofile; set("name","field_xy_lower"); set("monitor type",7);
-set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",substrate_top_z + 0.35*arch_edge_tip_z);
+addprofile; set("name","xy_lower"); set("monitor type",7);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",film_min_z + 0.35*(film_max_z-film_min_z));
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
-addprofile; set("name","field_xy_upper"); set("monitor type",7);
-set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",substrate_top_z + 0.75*arch_edge_tip_z);
+addprofile; set("name","xy_upper"); set("monitor type",7);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",film_min_z + 0.75*(film_max_z-film_min_z));
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
-addprofile; set("name","field_yz_center"); set("monitor type",5);
+addprofile; set("name","yz_center"); set("monitor type",5);
 set("x",0); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
-addprofile; set("name","field_yz_side"); set("monitor type",5);
+addprofile; set("name","yz_side"); set("monitor type",5);
 set("x",0.8*half_W); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
-addprofile; set("name","field_xz_reference"); set("monitor type",6);
+addprofile; set("name","xz_reference"); set("monitor type",6);
 set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",0.5*pattern_L); set("z",monitor_zc); set("z span",monitor_zs);
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
