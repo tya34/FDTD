@@ -165,8 +165,11 @@ set("name","Helix_W50_L150_VO2");
 set("material",film_material);
 addtogroup("Helix_W50_L150_group");
 
-substrate_margin_x = 25*um;
-substrate_margin_y = 25*um;
+fdtd_margin_x = 50*um;
+fdtd_margin_y = 50*um;
+substrate_xy_overhang = 5*um;
+substrate_margin_x = fdtd_margin_x+substrate_xy_overhang;
+substrate_margin_y = fdtd_margin_y+substrate_xy_overhang;
 xmin = film_min_x - substrate_margin_x;
 xmax = film_max_x + substrate_margin_x;
 ymin = film_min_y - substrate_margin_y;
@@ -187,8 +190,6 @@ set("z",zmin-5*um);
 set("z span",10*um);
 set("material",substrate_material);
 
-fdtd_margin_x = 10*um;
-fdtd_margin_y = 10*um;
 fdtd_substrate_depth = 4*um;
 source_gap_above_helix = 8*um;
 source_top_gap = 4*um;

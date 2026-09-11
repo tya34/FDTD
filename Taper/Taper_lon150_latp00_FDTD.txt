@@ -266,8 +266,11 @@ addtogroup("Taper_W250_L200_geometry");
 
 # Finite visualization substrate. Its top surface is z=0 and the complete
 # fixed edge of the membrane lies on it.
-substrate_margin_x = 30*um;
-substrate_margin_y = 30*um;
+fdtd_margin_x = 50*um;
+fdtd_margin_y = 50*um;
+substrate_xy_overhang = 5*um;
+substrate_margin_x = fdtd_margin_x + substrate_xy_overhang;
+substrate_margin_y = fdtd_margin_y + substrate_xy_overhang;
 substrate_depth = 10*um;
 
 addrect;
@@ -307,8 +310,6 @@ for(vertex_index=2:2*Nsurf){
     if(vtx(vertex_index,3) > film_max_z){ film_max_z = vtx(vertex_index,3); }
 }
 
-fdtd_margin_x = 10*um;
-fdtd_margin_y = 10*um;
 fdtd_substrate_depth = 4*um;
 source_gap_above_taper = 8*um;
 source_top_gap = 4*um;

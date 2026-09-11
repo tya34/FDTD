@@ -9,8 +9,8 @@
 - 材料：VO2 薄膜，SiO2 衬底。
 - VO2 薄膜厚度：500 nm。
 - 光源：统一使用 Bloch/Periodic 平面波，`polarization angle = 90 deg`。整体建模脚本默认沿 `-z` 方向正入射；批量角度脚本根据经纬度选择最近的注入面。
-- FDTD：紧凑区域，`mesh accuracy = 1`，`x min`、`x max`、`y min`、`y max`、`z min`、`z max` 六个边界均为 PML。
-- 衬底：统一使用 `SiO2 (Glass) - Palik`。脚本中的有限几何体向 PML 内延伸，用于表示计算域内的半无限 SiO2 基底。
+- FDTD：所有含 FDTD 区域的脚本统一采用 `fdtd_margin_x = 50 um`、`fdtd_margin_y = 50 um`，`mesh accuracy = 1`；`x min`、`x max`、`y min`、`y max`、`z min`、`z max` 六个边界均为 PML。
+- 衬底：统一使用 `SiO2 (Glass) - Palik`。为表示半无限 SiO2 基底，衬底在 `x/y` 四侧均比 FDTD 区域额外延伸 `5 um`；衬底厚度为 `10 um`，而 FDTD 仅进入衬底 `4 um`，因此衬底底面比 `z min` 再向下延伸 `6 um`。
 - 每个脚本统一包含五个频域场 monitor：`field_xy_lower`、`field_xy_upper`、`field_yz_center`、`field_yz_side` 和 `field_xz_reference`。
 
 ## 经纬度入射角定义
@@ -144,9 +144,18 @@ target_kz = -src_pos_z
 - 左倾方式：继续使用 `x = x0-z0*tan(axis_tilt_deg)`，并将 `axis_tilt_deg` 改为 `30 deg`。
 - `3V/` 文件夹按统一经纬度规则包含 `35` 个角度脚本。
 
+## 2026-09-11 横向余量与半无限衬底统一
+
+- 修改范围：八个器件文件夹中的全部角度脚本，以及 `整体建模/` 中除几何专用 `Taper_FDTD.txt` 外的七个基础 FDTD 脚本，共 `286` 个含 FDTD 区域的脚本。
+- 所有上述脚本的 FDTD 区域在 `x`、`y` 两方向均采用 `50 um` 单边余量，不再保留原来的 `5 um` 或 `10 um` 横向余量。
+- 所有上述脚本增加统一变量 `substrate_xy_overhang = 5 um`。SiO2 衬底的 `x/y` 覆盖范围由 FDTD 横向范围向外再延伸 `5 um`，确保衬底完整穿过横向 PML 边界，不在仿真域内部产生人为基底侧壁。
+- `z` 方向保持 `fdtd_substrate_depth = 4 um`，衬底厚度保持 `10 um`；衬底底面比 FDTD 的 `z min` 深 `6 um`，确保衬底穿过底部 PML。
+- `整体建模/Taper_FDTD.txt` 只建立薄膜和衬底，不含 FDTD 区域，因此不纳入 `50 um` FDTD 单边余量统一；`Taper/` 中的 `35` 个完整角度仿真脚本已纳入。
+- 此次修改不改变器件几何、材料、经纬度入射角、注入轴、波长、偏振、边界类型或 monitor 设置。
+
 ## 当前状态
 
-- `整体建模/` 中除 `Taper_FDTD.txt` 外的七个基础脚本包含结构、SiO2 衬底、紧凑 FDTD 区域、Bloch/Periodic 平面波和五个统一命名的 profile monitor；`Taper_FDTD.txt` 按最新要求仅保留薄膜与衬底模型。
+- `整体建模/` 中除 `Taper_FDTD.txt` 外的七个基础脚本包含结构、SiO2 衬底、统一 `50 um` 横向单边余量的 FDTD 区域、Bloch/Periodic 平面波和五个统一命名的 profile monitor；`Taper_FDTD.txt` 按最新要求仅保留薄膜与衬底模型。
 - `Taper/` 的 `35` 个角度脚本均已改用当前 200 um × 250 um × 500 nm 的 SEM 标定类圆锥模型，且所有角度特有的光源参数未改动。
 - Tube、Ring、Taper、Helix、Arch、2V 和 3V 文件夹当前各保留 `35` 个角度脚本：经度 `0:30:180 deg`，纬度 `-60:30:60 deg`。
 - `1V/` 文件夹当前保留 `34` 个角度脚本；`1V_lon030_latp30_FDTD.txt` 已被删除，其余文件仍使用相同的经纬度命名规则。

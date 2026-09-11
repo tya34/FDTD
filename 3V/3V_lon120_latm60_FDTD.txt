@@ -159,8 +159,11 @@ set("material",film_material);
 addtogroup("3V_W30_L300_Open150_Tilt30_group");
 
 # Substrate follows the actual skewed footprint.
-substrate_margin_x = 25*um;
-substrate_margin_y = 25*um;
+fdtd_margin_x = 50*um;
+fdtd_margin_y = 50*um;
+substrate_xy_overhang = 5*um;
+substrate_margin_x = fdtd_margin_x+substrate_xy_overhang;
+substrate_margin_y = fdtd_margin_y+substrate_xy_overhang;
 xmin = film_min_x-substrate_margin_x;
 xmax = film_max_x+substrate_margin_x;
 ymin = film_min_y-substrate_margin_y;
@@ -181,8 +184,6 @@ set("z span",10*um);
 set("material",substrate_material);
 
 # Compact FDTD region sized from the computed 2V bounds.
-fdtd_margin_x = 10*um;
-fdtd_margin_y = 10*um;
 fdtd_substrate_depth = 4*um;
 source_gap_above_3V = 8*um;
 source_top_gap = 4*um;

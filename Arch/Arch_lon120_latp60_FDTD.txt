@@ -113,8 +113,13 @@ set("name","Arch_W30_L150_VO2");
 set("material",film_material);
 addtogroup("Arch_W30_L150_group");
 
-xmin = -55*um; xmax = 55*um;
-ymin = -25*um; ymax = pattern_L + 25*um;
+fdtd_margin_x = 50*um;
+fdtd_margin_y = 50*um;
+substrate_xy_overhang = 5*um;
+xmin = -half_W - fdtd_margin_x - substrate_xy_overhang;
+xmax = half_W + fdtd_margin_x + substrate_xy_overhang;
+ymin = -fdtd_margin_y - substrate_xy_overhang;
+ymax = pattern_L + fdtd_margin_y + substrate_xy_overhang;
 zmin = substrate_top_z; zmax = substrate_top_z + arch_edge_tip_z + 15*um;
 xc = (xmin+xmax)/2; yc = (ymin+ymax)/2; zc = (zmin+zmax)/2;
 xs = xmax-xmin; ys = ymax-ymin; zs = zmax-zmin;
@@ -123,8 +128,6 @@ addrect; set("name","SiO2_substrate");
 set("x",xc); set("x span",xs); set("y",yc); set("y span",ys); set("z",zmin-5*um); set("z span",10*um);
 set("material",substrate_material);
 
-fdtd_margin_x = 10*um;
-fdtd_margin_y = 10*um;
 fdtd_substrate_depth = 4*um;
 source_gap_above_arch = 8*um;
 source_top_gap = 4*um;
