@@ -1,0 +1,307 @@
+############################################################
+# 4V_lon060_latm60_FDTD.txt
+# Angle model: device + FDTD + substrate + source + five monitors.
+# Preserves 3V W/L = 30/300 um, thickness = 500 nm and materials.
+# One substrate-contacting edge; gentle rise for 30 um of arc length,
+# short steep bend, near-vertical stem, and a slight backward tip.
+# Angles are measured from +y towards +z; >90 deg turns toward -y.
+# Geometric fixed edge only (no mechanical solver boundary condition).
+############################################################
+
+deleteall;
+clear;
+
+um = 1e-6;
+nm = 1e-9;
+pi_val = 3.141592653589793;
+
+film_material = "VO2 80";
+substrate_material = "SiO2 (Glass) - Palik";
+lambda0 = 5*um;
+
+pattern_W = 30*um;
+pattern_L = 300*um;
+film_t = 500*nm;
+substrate_top_z = 0;
+
+# Piecewise circular/straight centerline, parameterized by true arc
+# length. Position and tangent are continuous at all three junctions.
+# The 3V lateral shear is replaced by an upright profile in the y-z plane.
+# Shape controls are descriptive choices, not a voltage-actuation solve.
+gentle_L = 30*um;
+transition_L = 8*um;
+tip_L = 30*um;
+gentle_angle_deg = 8;
+upright_angle_deg = 88;
+tip_angle_deg = 105;
+
+# Keep 30 width subdivisions; refine length to resolve the tight bend.
+Nx = 30;
+Ny = 1200;
+Nxv = Nx+1;
+Nyv = Ny+1;
+Nsurf = Nxv*Nyv;
+half_W = 0.5*pattern_W;
+
+angle_1 = gentle_angle_deg*pi_val/180;
+angle_2 = upright_angle_deg*pi_val/180;
+angle_3 = tip_angle_deg*pi_val/180;
+s_1 = gentle_L;
+s_2 = gentle_L+transition_L;
+s_3 = pattern_L-tip_L;
+k_1 = angle_1/gentle_L;
+k_2 = (angle_2-angle_1)/transition_L;
+k_3 = (angle_3-angle_2)/tip_L;
+y_1 = sin(angle_1)/k_1;
+z_1 = (1-cos(angle_1))/k_1;
+y_2 = y_1+(sin(angle_2)-sin(angle_1))/k_2;
+z_2 = z_1+(cos(angle_1)-cos(angle_2))/k_2;
+y_3 = y_2+(s_3-s_2)*cos(angle_2);
+z_3 = z_2+(s_3-s_2)*sin(angle_2);
+
+addstructuregroup;
+set("name","4V_W30_L300_Upright_group");
+
+# Integrate dy/ds=cos(angle), dz/ds=sin(angle) exactly on each section.
+# x stays constant, so both width and the 300 um developed length
+# are preserved without the length increase caused by a lateral shear.
+center_y = matrix(Nyv,1);
+center_z = matrix(Nyv,1);
+center_angle = matrix(Nyv,1);
+for(iy=1:Nyv){
+    length_s = (iy-1)/Ny*pattern_L;
+    if(length_s <= s_1){
+        angle = k_1*length_s;
+        center_y(iy) = sin(angle)/k_1;
+        center_z(iy) = (1-cos(angle))/k_1;
+    } else {
+        if(length_s <= s_2){
+            angle = angle_1+k_2*(length_s-s_1);
+            center_y(iy) = y_1+(sin(angle)-sin(angle_1))/k_2;
+            center_z(iy) = z_1+(cos(angle_1)-cos(angle))/k_2;
+        } else {
+            if(length_s <= s_3){
+                angle = angle_2;
+                center_y(iy) = y_2+(length_s-s_2)*cos(angle);
+                center_z(iy) = z_2+(length_s-s_2)*sin(angle);
+            } else {
+                angle = angle_2+k_3*(length_s-s_3);
+                center_y(iy) = y_3+(sin(angle)-sin(angle_2))/k_3;
+                center_z(iy) = z_3+(cos(angle_2)-cos(angle))/k_3;
+            }
+        }
+    }
+    center_angle(iy) = angle;
+}
+px = matrix(Nsurf,1);
+py = matrix(Nsurf,1);
+pz = matrix(Nsurf,1);
+for(ix=1:Nxv){
+    flat_x = -half_W+(ix-1)/Nx*pattern_W;
+    for(iy=1:Nyv){
+        id = (iy-1)*Nxv+ix;
+        px(id) = flat_x;
+        py(id) = center_y(iy);
+        pz(id) = center_z(iy);
+    }
+}
+
+# Offset the center surface by +/- film_t/2 along the local
+# normal to form an equal-thickness closed VO2 solid.
+vtx = matrix(2*Nsurf,3);
+for(ix=1:Nxv){
+    for(iy=1:Nyv){
+        id = (iy-1)*Nxv + ix;
+        # Exact unit normal keeps the entire fixed bottom edge at z=0
+        # after the global z shift, with a horizontal starting tangent.
+        normal_x = 0;
+        normal_y = -sin(center_angle(iy));
+        normal_z = cos(center_angle(iy));
+        vtx(id,1) = px(id)+0.5*film_t*normal_x;
+        vtx(id,2) = py(id)+0.5*film_t*normal_y;
+        vtx(id,3) = pz(id)+0.5*film_t*normal_z;
+        vtx(id+Nsurf,1) = px(id)-0.5*film_t*normal_x;
+        vtx(id+Nsurf,2) = py(id)-0.5*film_t*normal_y;
+        vtx(id+Nsurf,3) = pz(id)-0.5*film_t*normal_z;
+    }
+}
+
+# Triangulate the two skins and all four side walls.
+Nfacets = 4*Nx*Ny+4*Nx+4*Ny;
+fct = matrix(4,1,Nfacets);
+fi = 1;
+for(ix=1:Nx){
+    for(iy=1:Ny){
+        id00 = (iy-1)*Nxv+ix; id10 = id00+1; id01 = id00+Nxv; id11 = id01+1;
+        b00 = id00+Nsurf; b10 = id10+Nsurf; b01 = id01+Nsurf; b11 = id11+Nsurf;
+        fct(1,1,fi)=id00; fct(2,1,fi)=id10; fct(3,1,fi)=id11; fi=fi+1;
+        fct(1,1,fi)=id00; fct(2,1,fi)=id11; fct(3,1,fi)=id01; fi=fi+1;
+        fct(1,1,fi)=b00; fct(2,1,fi)=b11; fct(3,1,fi)=b10; fi=fi+1;
+        fct(1,1,fi)=b00; fct(2,1,fi)=b01; fct(3,1,fi)=b11; fi=fi+1;
+    }
+}
+for(ix=1:Nx){
+    id0 = ix; id1 = ix+1; b0 = id0+Nsurf; b1 = id1+Nsurf;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=b0; fi=fi+1;
+    fct(1,1,fi)=id0; fct(2,1,fi)=id1; fct(3,1,fi)=b1; fi=fi+1;
+    id0 = Ny*Nxv+ix; id1 = id0+1; b0 = id0+Nsurf; b1 = id1+Nsurf;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b0; fct(3,1,fi)=b1; fi=fi+1;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=id1; fi=fi+1;
+}
+for(iy=1:Ny){
+    id0 = (iy-1)*Nxv+1; id1 = id0+Nxv; b0 = id0+Nsurf; b1 = id1+Nsurf;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b0; fct(3,1,fi)=b1; fi=fi+1;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=id1; fi=fi+1;
+    id0 = (iy-1)*Nxv+Nxv; id1 = id0+Nxv; b0 = id0+Nsurf; b1 = id1+Nsurf;
+    fct(1,1,fi)=id0; fct(2,1,fi)=id1; fct(3,1,fi)=b1; fi=fi+1;
+    fct(1,1,fi)=id0; fct(2,1,fi)=b1; fct(3,1,fi)=b0; fi=fi+1;
+}
+
+# Find the true solid bounds and shift only in z so the lowest
+# VO2 point touches the SiO2 top surface.
+film_min_x = vtx(1,1); film_max_x = vtx(1,1);
+film_min_y = vtx(1,2); film_max_y = vtx(1,2);
+film_min_z = vtx(1,3); film_max_z = vtx(1,3);
+for(vertex_index=2:2*Nsurf){
+    if(vtx(vertex_index,1) < film_min_x){ film_min_x = vtx(vertex_index,1); }
+    if(vtx(vertex_index,1) > film_max_x){ film_max_x = vtx(vertex_index,1); }
+    if(vtx(vertex_index,2) < film_min_y){ film_min_y = vtx(vertex_index,2); }
+    if(vtx(vertex_index,2) > film_max_y){ film_max_y = vtx(vertex_index,2); }
+    if(vtx(vertex_index,3) < film_min_z){ film_min_z = vtx(vertex_index,3); }
+    if(vtx(vertex_index,3) > film_max_z){ film_max_z = vtx(vertex_index,3); }
+}
+z_shift = substrate_top_z-film_min_z;
+for(vertex_index=1:2*Nsurf){
+    vtx(vertex_index,3) = vtx(vertex_index,3)+z_shift;
+}
+film_max_z = film_max_z+z_shift;
+film_min_z = substrate_top_z;
+
+addplanarsolid;
+set("vertices",vtx);
+set("facets",fct);
+set("name","4V_W30_L300_Upright_VO2");
+set("material",film_material);
+addtogroup("4V_W30_L300_Upright_group");
+
+# Substrate follows the actual device footprint.
+fdtd_margin_x = 50*um;
+fdtd_margin_y = 50*um;
+substrate_xy_overhang = 5*um;
+fdtd_substrate_depth = 4*um;
+fdtd_air_margin = 12*um;
+
+# Size the FDTD region from the actual device bounds before adding the substrate.
+fdtd_xmin = film_min_x - fdtd_margin_x;
+fdtd_xmax = film_max_x + fdtd_margin_x;
+fdtd_ymin = film_min_y - fdtd_margin_y;
+fdtd_ymax = film_max_y + fdtd_margin_y;
+fdtd_zmin = substrate_top_z - fdtd_substrate_depth;
+fdtd_zmax = film_max_z + fdtd_air_margin;
+
+fdtd_xc = (fdtd_xmin+fdtd_xmax)/2;
+fdtd_yc = (fdtd_ymin+fdtd_ymax)/2;
+fdtd_zc = (fdtd_zmin+fdtd_zmax)/2;
+fdtd_xs = fdtd_xmax-fdtd_xmin;
+fdtd_ys = fdtd_ymax-fdtd_ymin;
+fdtd_zs = fdtd_zmax-fdtd_zmin;
+
+addfdtd;
+set("x",fdtd_xc);
+set("x span",fdtd_xs);
+set("y",fdtd_yc);
+set("y span",fdtd_ys);
+set("z",fdtd_zc);
+set("z span",fdtd_zs);
+set("mesh accuracy",1);
+set("x min bc","PML");
+set("x max bc","PML");
+set("y min bc","PML");
+set("y max bc","PML");
+set("z min bc","PML");
+set("z max bc","PML");
+
+# Add the semi-infinite substrate after the FDTD footprint is known.
+substrate_depth = 10*um;
+substrate_xmin = fdtd_xmin - substrate_xy_overhang;
+substrate_xmax = fdtd_xmax + substrate_xy_overhang;
+substrate_ymin = fdtd_ymin - substrate_xy_overhang;
+substrate_ymax = fdtd_ymax + substrate_xy_overhang;
+substrate_xc = (substrate_xmin+substrate_xmax)/2;
+substrate_yc = (substrate_ymin+substrate_ymax)/2;
+substrate_xs = substrate_xmax-substrate_xmin;
+substrate_ys = substrate_ymax-substrate_ymin;
+
+addrect;
+set("name","SiO2_substrate");
+set("x",substrate_xc);
+set("x span",substrate_xs);
+set("y",substrate_yc);
+set("y span",substrate_ys);
+set("z",substrate_top_z-0.5*substrate_depth);
+set("z span",substrate_depth);
+set("material",substrate_material);
+
+# Angle-specific source and monitor placement helpers.
+source_top_gap = 4*um;
+source_z = fdtd_zmax - source_top_gap;
+monitor_zmin = substrate_top_z - 3*um;
+monitor_zmax = source_z - 1*um;
+monitor_zc = (monitor_zmin+monitor_zmax)/2;
+monitor_zs = monitor_zmax-monitor_zmin;
+
+# User source coordinates: source_lon_deg = 60 deg, source_lat_deg = -60 deg.
+# Earth-like source hemisphere: longitude runs from -x through +z to +x; latitude runs from -y to +y.
+# Source-position unit vector: src_pos_x = -0.25, src_pos_y = -0.866025, src_pos_z = 0.433013.
+# Target propagation unit vector from the source position back toward the structure center:
+# kx = 0.25, ky = 0.866025, kz = -0.433013.
+# User longitude/latitude are source-position coordinates; FDTD angle theta/phi below are Lumerical source angles.
+# The injection axis is selected from the largest |k| component to avoid grazing source injection.
+source_lon_deg = 60;
+source_lat_deg = -60;
+src_pos_x = -0.25;
+src_pos_y = -0.866025;
+src_pos_z = 0.433013;
+target_kx = 0.25;
+target_ky = 0.866025;
+target_kz = -0.433013;
+fdtd_angle_theta_deg = 30;
+fdtd_angle_phi_deg = 150;
+
+addplane;
+set("name","src_lon060_latm60");
+set("plane wave type","Bloch/Periodic");
+set("injection axis","y");
+set("direction","forward");
+set("angle theta",fdtd_angle_theta_deg);
+set("angle phi",fdtd_angle_phi_deg);
+set("polarization angle",90);
+set("x",fdtd_xc);
+set("x span",fdtd_xs);
+set("y",fdtd_ymin + 0.5*source_top_gap);
+set("z",fdtd_zc);
+set("z span",fdtd_zs);
+set("wavelength start",lambda0);
+set("wavelength stop",lambda0);
+
+addprofile; set("name","xy_lower"); set("monitor type",7);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",film_min_z+0.35*(film_max_z-film_min_z));
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","xy_upper"); set("monitor type",7);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",film_min_z+0.75*(film_max_z-film_min_z));
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","yz_center"); set("monitor type",5);
+set("x",fdtd_xc); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","yz_side"); set("monitor type",5);
+set("x",fdtd_xc+0.25*(film_max_x-film_min_x)); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+addprofile; set("name","xz_reference"); set("monitor type",6);
+set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("z",monitor_zc); set("z span",monitor_zs);
+set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
+
+# run;
