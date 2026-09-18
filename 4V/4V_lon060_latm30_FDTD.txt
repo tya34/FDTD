@@ -62,7 +62,7 @@ z_3 = z_2+(s_3-s_2)*sin(angle_2);
 addstructuregroup;
 set("name","4V_W30_L300_Upright_group");
 
-# Integrate dy/ds=cos(angle), dz/ds=sin(angle) exactly on each section.
+# Integrate dy/ds=cos(tangent_angle_rad), dz/ds=sin(tangent_angle_rad) exactly on each section.
 # x stays constant, so both width and the 300 um developed length
 # are preserved without the length increase caused by a lateral shear.
 center_y = matrix(Nyv,1);
@@ -71,27 +71,27 @@ center_angle = matrix(Nyv,1);
 for(iy=1:Nyv){
     length_s = (iy-1)/Ny*pattern_L;
     if(length_s <= s_1){
-        angle = k_1*length_s;
-        center_y(iy) = sin(angle)/k_1;
-        center_z(iy) = (1-cos(angle))/k_1;
+        tangent_angle_rad = k_1*length_s;
+        center_y(iy) = sin(tangent_angle_rad)/k_1;
+        center_z(iy) = (1-cos(tangent_angle_rad))/k_1;
     } else {
         if(length_s <= s_2){
-            angle = angle_1+k_2*(length_s-s_1);
-            center_y(iy) = y_1+(sin(angle)-sin(angle_1))/k_2;
-            center_z(iy) = z_1+(cos(angle_1)-cos(angle))/k_2;
+            tangent_angle_rad = angle_1+k_2*(length_s-s_1);
+            center_y(iy) = y_1+(sin(tangent_angle_rad)-sin(angle_1))/k_2;
+            center_z(iy) = z_1+(cos(angle_1)-cos(tangent_angle_rad))/k_2;
         } else {
             if(length_s <= s_3){
-                angle = angle_2;
-                center_y(iy) = y_2+(length_s-s_2)*cos(angle);
-                center_z(iy) = z_2+(length_s-s_2)*sin(angle);
+                tangent_angle_rad = angle_2;
+                center_y(iy) = y_2+(length_s-s_2)*cos(tangent_angle_rad);
+                center_z(iy) = z_2+(length_s-s_2)*sin(tangent_angle_rad);
             } else {
-                angle = angle_2+k_3*(length_s-s_3);
-                center_y(iy) = y_3+(sin(angle)-sin(angle_2))/k_3;
-                center_z(iy) = z_3+(cos(angle_2)-cos(angle))/k_3;
+                tangent_angle_rad = angle_2+k_3*(length_s-s_3);
+                center_y(iy) = y_3+(sin(tangent_angle_rad)-sin(angle_2))/k_3;
+                center_z(iy) = z_3+(cos(angle_2)-cos(tangent_angle_rad))/k_3;
             }
         }
     }
-    center_angle(iy) = angle;
+    center_angle(iy) = tangent_angle_rad;
 }
 px = matrix(Nsurf,1);
 py = matrix(Nsurf,1);
