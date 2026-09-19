@@ -117,7 +117,7 @@ fdtd_margin_x = 50*um;
 fdtd_margin_y = 50*um;
 substrate_xy_overhang = 5*um;
 fdtd_substrate_depth = 4*um;
-fdtd_air_margin = 12*um;
+fdtd_air_margin = 212*um;
 
 # Size the FDTD region from the actual device bounds before adding the substrate.
 # Extract the actual solid bounds after the z shift.
@@ -189,8 +189,14 @@ set("material",substrate_material);
 # Angle-specific source and monitor placement helpers.
 source_top_gap = 4*um;
 source_z = fdtd_zmax - source_top_gap;
-monitor_zmin = substrate_top_z - 3*um;
-monitor_zmax = source_z - 1*um;
+# Monitor coverage follows the curled solid bounds, with 1 um padding.
+monitor_padding = 1*um;
+monitor_xc = (film_min_x+film_max_x)/2;
+monitor_yc = (film_min_y+film_max_y)/2;
+monitor_xs = film_max_x-film_min_x+2*monitor_padding;
+monitor_ys = film_max_y-film_min_y+2*monitor_padding;
+monitor_zmin = film_min_z - monitor_padding;
+monitor_zmax = film_max_z + monitor_padding;
 monitor_zc = (monitor_zmin+monitor_zmax)/2;
 monitor_zs = monitor_zmax-monitor_zmin;
 
@@ -229,23 +235,23 @@ set("wavelength start",lambda0);
 set("wavelength stop",lambda0);
 
 addprofile; set("name","xy_lower"); set("monitor type",7);
-set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",film_min_z + 0.35*(film_max_z-film_min_z));
+set("x",monitor_xc); set("x span",monitor_xs); set("y",monitor_yc); set("y span",monitor_ys); set("z",film_min_z + 0.35*(film_max_z-film_min_z));
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
 addprofile; set("name","xy_upper"); set("monitor type",7);
-set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",film_min_z + 0.75*(film_max_z-film_min_z));
+set("x",monitor_xc); set("x span",monitor_xs); set("y",monitor_yc); set("y span",monitor_ys); set("z",film_min_z + 0.75*(film_max_z-film_min_z));
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
 addprofile; set("name","yz_center"); set("monitor type",5);
-set("x",0); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
+set("x",0); set("y",monitor_yc); set("y span",monitor_ys); set("z",monitor_zc); set("z span",monitor_zs);
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
 addprofile; set("name","yz_side"); set("monitor type",5);
-set("x",0.8*half_W); set("y",fdtd_yc); set("y span",0.9*fdtd_ys); set("z",monitor_zc); set("z span",monitor_zs);
+set("x",0.8*half_W); set("y",monitor_yc); set("y span",monitor_ys); set("z",monitor_zc); set("z span",monitor_zs);
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
 addprofile; set("name","xz_reference"); set("monitor type",6);
-set("x",fdtd_xc); set("x span",0.9*fdtd_xs); set("y",0.5*pattern_L); set("z",monitor_zc); set("z span",monitor_zs);
+set("x",monitor_xc); set("x span",monitor_xs); set("y",0.5*pattern_L); set("z",monitor_zc); set("z span",monitor_zs);
 set("override global monitor settings",1); set("use source limits",1); set("frequency points",1);
 
 # run;
