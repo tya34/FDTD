@@ -291,11 +291,11 @@ for(vertex_index=2:2*Nsurf){
     if(vtx(vertex_index,3) > film_max_z){ film_max_z = vtx(vertex_index,3); }
 }
 
-fdtd_margin_x = 50*um;
-fdtd_margin_y = 50*um;
+fdtd_margin_x = 200*um;
+fdtd_margin_y = 200*um;
 substrate_xy_overhang = 5*um;
-fdtd_substrate_depth = 4*um;
-fdtd_air_margin = 212*um;
+fdtd_substrate_depth = 10*um;
+fdtd_air_margin = 250*um;
 
 # Size the FDTD region from the actual device bounds before adding the substrate.
 fdtd_xmin = film_min_x - fdtd_margin_x;
@@ -313,6 +313,7 @@ fdtd_ys = fdtd_ymax-fdtd_ymin;
 fdtd_zs = fdtd_zmax-fdtd_zmin;
 
 addfdtd;
+set("simulation time",10e-12);
 set("x",fdtd_xc);
 set("x span",fdtd_xs);
 set("y",fdtd_yc);

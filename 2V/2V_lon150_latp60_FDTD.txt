@@ -159,11 +159,11 @@ set("material",film_material);
 addtogroup("2V_W30_L300_D140_Tilt10_group");
 
 # Substrate follows the actual skewed footprint.
-fdtd_margin_x = 50*um;
-fdtd_margin_y = 50*um;
+fdtd_margin_x = 200*um;
+fdtd_margin_y = 200*um;
 substrate_xy_overhang = 5*um;
-fdtd_substrate_depth = 4*um;
-fdtd_air_margin = 212*um;
+fdtd_substrate_depth = 10*um;
+fdtd_air_margin = 250*um;
 
 # Size the FDTD region from the actual device bounds before adding the substrate.
 fdtd_xmin = film_min_x - fdtd_margin_x;
@@ -181,6 +181,7 @@ fdtd_ys = fdtd_ymax-fdtd_ymin;
 fdtd_zs = fdtd_zmax-fdtd_zmin;
 
 addfdtd;
+set("simulation time",10e-12);
 set("x",fdtd_xc);
 set("x span",fdtd_xs);
 set("y",fdtd_yc);
@@ -217,15 +218,15 @@ set("z span",substrate_depth);
 set("material",substrate_material);
 
 # Angle-specific source and monitor placement helpers.
-source_top_gap = 4*um;
-source_z = fdtd_zmax - source_top_gap;
-# Monitor coverage follows the curled solid bounds, with 1 um padding.
-monitor_padding = 1*um;
+source_top_gap = 10*um;
+source_z = film_max_z + source_top_gap;
+# Monitor coverage follows the curled solid bounds, with 10 um padding.
+monitor_padding = 10*um;
 monitor_xc = (film_min_x+film_max_x)/2;
 monitor_yc = (film_min_y+film_max_y)/2;
 monitor_xs = film_max_x-film_min_x+2*monitor_padding;
 monitor_ys = film_max_y-film_min_y+2*monitor_padding;
-monitor_zmin = film_min_z - monitor_padding;
+monitor_zmin = max([film_min_z-monitor_padding,fdtd_zmin+1*um]);
 monitor_zmax = film_max_z + monitor_padding;
 monitor_zc = (monitor_zmin+monitor_zmax)/2;
 monitor_zs = monitor_zmax-monitor_zmin;
@@ -258,7 +259,7 @@ set("angle phi",fdtd_angle_phi_deg);
 set("polarization angle",90);
 set("x",fdtd_xc);
 set("x span",fdtd_xs);
-set("y",fdtd_ymax - 0.5*source_top_gap);
+set("y",film_max_y + source_top_gap);
 set("z",fdtd_zc);
 set("z span",fdtd_zs);
 set("wavelength start",lambda0);

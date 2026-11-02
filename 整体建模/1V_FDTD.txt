@@ -46,11 +46,11 @@ set("first axis","y");
 set("rotation 1",90);
 addtogroup("1V_W30_L300_D110_group");
 
-fdtd_margin_x = 50*um;
-fdtd_margin_y = 50*um;
+fdtd_margin_x = 200*um;
+fdtd_margin_y = 200*um;
 substrate_xy_overhang = 5*um;
-fdtd_substrate_depth = 4*um;
-fdtd_air_margin = 212*um;
+fdtd_substrate_depth = 10*um;
+fdtd_air_margin = 250*um;
 
 # Size the FDTD region from the actual device bounds before adding the substrate.
 film_min_x = -0.5*pattern_W;
@@ -75,6 +75,7 @@ fdtd_ys = fdtd_ymax-fdtd_ymin;
 fdtd_zs = fdtd_zmax-fdtd_zmin;
 
 addfdtd;
+set("simulation time",10e-12);
 set("x",fdtd_xc);
 set("x span",fdtd_xs);
 set("y",fdtd_yc);
