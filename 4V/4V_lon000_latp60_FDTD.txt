@@ -245,7 +245,6 @@ set("material",substrate_material);
 
 # Angle-specific source and monitor placement helpers.
 source_top_gap = 10*um;
-source_z = film_max_z + source_top_gap;
 # Monitor coverage follows the curled solid bounds, with 10 um padding.
 monitor_padding = 10*um;
 monitor_xc = (film_min_x+film_max_x)/2;
