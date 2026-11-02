@@ -224,7 +224,8 @@ set("z span",substrate_depth);
 set("material",substrate_material);
 
 # Angle-specific source and monitor placement helpers.
-source_top_gap = 10*um;
+# Source clearance is measured outward from the device on its injection side.
+source_device_gap = 4*um;
 # Monitor coverage follows the curled solid bounds, with 10 um padding.
 monitor_padding = 10*um;
 monitor_xc = (film_min_x+film_max_x)/2;
@@ -262,7 +263,8 @@ set("direction","forward");
 set("angle theta",fdtd_angle_theta_deg);
 set("angle phi",fdtd_angle_phi_deg);
 set("polarization angle",90);
-set("x",film_min_x - source_top_gap);
+# Source lies on the -X side; propagation points toward the device.
+set("x",film_min_x - source_device_gap);
 set("y",fdtd_yc);
 set("y span",fdtd_ys);
 set("z",fdtd_zc);
